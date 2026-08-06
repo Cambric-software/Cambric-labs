@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { HomePage } from './pages/HomePage'
-import { LabPage } from './pages/LabPage'
+import LabPage from './pages/LabPage'
 import { LearnPage } from './pages/LearnPage'
 import { AdminPage } from './pages/AdminPage'
 

@@ -1,358 +1,276 @@
-import { useState, useEffect } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import { 
-  Play, Settings, 
-  Layers, Activity, Eye, HelpCircle,
-  Minus, Plus
-} from 'lucide-react'
-import { api } from '../api/client'
-import { NeuronVisualization } from '../components/NeuronVisualization'
-import { ForwardPassAnimation } from '../components/ForwardPassAnimation'
-import { TrainingControls } from '../components/TrainingControls'
-import { TrainingGraph } from '../components/TrainingGraph'
+import { useState, useEffect, useCallback } from 'react'
+import { Zap, BookOpen, Code, Play, RotateCcw, Plus, Minus } from 'lucide-react'
+import { neuronApi } from '../supabase'
 import styles from './LabPage.module.css'
 
-interface NeuronState {
+interface Neuron {
   input_count: number
   weights: number[]
   bias: number
   activation: string
-  last_output: number | null
-  last_weighted_sum: number | null
+  loss_function?: string
 }
 
-export function LabPage() {
-  useParams()
-  const [searchParams] = useSearchParams()
-  const experimentType = searchParams.get('type') || 'one-neuron'
-  
-  // Neuron state
-  const [neuron, setNeuron] = useState<NeuronState | null>(null)
-  const [inputs, setInputs] = useState<number[]>([0.5, 0.5, 0.5])
-  const [learningRate, setLearningRate] = useState(0.1)
-  
-  // Training state
-  const [currentCycle, setCurrentCycle] = useState(0)
-  const [loss, setLoss] = useState<number | null>(null)
-  const [trainingHistory, setTrainingHistory] = useState<{cycle: number, loss: number}[]>([])
+export default function LabPage() {
+  const [neuron, setNeuron] = useState<Neuron | null>(null)
+  const [inputs, setInputs] = useState<number[]>([0.5, 0.3, 0.8])
+  const [output, setOutput] = useState<number | null>(null)
+  const [cycleCount, setCycleCount] = useState(0)
+  const [lastLoss, setLastLoss] = useState<number | null>(null)
+  const [lastGradient, setLastGradient] = useState<number | null>(null)
   const [showForwardAnimation, setShowForwardAnimation] = useState(false)
-  const [showWhy, setShowWhy] = useState<string | null>(null)
-  const [explanation, setExplanation] = useState<{simple: string; technical: string; analogy?: string} | null>(null)
-  
-  // Initialize neuron
-  useEffect(() => {
-    if (experimentType === 'one-neuron') {
-      // Create a simple 3-input neuron
-      api.createNeuron({
-        input_count: 3,
-        bias: 0.0,
-        activation: 'relu'
-      }).then((response) => {
-        if (response.neuron) {
-          setNeuron(response.neuron)
-        }
-      }).catch(console.error)
-    }
-  }, [experimentType])
-  
-  // Compute forward pass
-  const computeForward = () => {
-    if (!neuron) return
-    
-    api.neuronForward(neuron, { inputs }).then((result) => {
-      setNeuron(result.neuron_state)
-    }).catch(console.error)
-  }
-  
-  // Single training cycle
-  const runCycle = () => {
-    if (!neuron) return
-    
-    const targets = [1.0] // Target output
-    api.neuronTrainStep(neuron, {
-      inputs,
-      targets,
-      learning_rate: learningRate
-    }).then((result) => {
-      setNeuron(result.after)
-      setCurrentCycle((c) => c + 1)
-      setLoss(result.loss)
-      setTrainingHistory((h) => [...h, { cycle: currentCycle + 1, loss: result.loss }])
-    }).catch(console.error)
-  }
-  
-  // Get explanation
-  const getExplanation = async (concept: string) => {
+  const [explainMode, setExplainMode] = useState<'simple' | 'technical'>('simple')
+
+  const createNeuron = useCallback(async (inputCount: number = 3, activation: string = 'relu') => {
     try {
-      const response = await fetch(`/api/concepts/${concept}`)
-      const data = await response.json()
-      setExplanation(data)
-      setShowWhy(concept)
-    } catch (error) {
-      console.error('Failed to get explanation:', error)
+      const { data, error } = await neuronApi.create(inputCount, activation)
+      if (error) throw error
+      if (data?.neuron) {
+        setNeuron(data.neuron)
+        return
+      }
+    } catch (err) {
+      console.error('Edge function not available, using local neuron')
+    }
+    const fallbackNeuron: Neuron = {
+      input_count: inputCount,
+      weights: Array.from({ length: inputCount }, () => Math.random() * 0.5 - 0.25),
+      bias: Math.random() * 0.5 - 0.25,
+      activation,
+      loss_function: 'mse',
+    }
+    setNeuron(fallbackNeuron)
+  }, [])
+
+  useEffect(() => {
+    createNeuron()
+  }, [createNeuron])
+
+  const runForward = useCallback(() => {
+    if (!neuron) return
+    setShowForwardAnimation(true)
+    setTimeout(() => {
+      let weightedSum = neuron.bias
+      for (let i = 0; i < neuron.input_count; i++) {
+        weightedSum += inputs[i] * neuron.weights[i]
+      }
+      const activationFn = (x: number) => {
+        switch (neuron.activation) {
+          case 'relu': return Math.max(0, x)
+          case 'sigmoid': return 1 / (1 + Math.exp(-x))
+          case 'tanh': return Math.tanh(x)
+          default: return x
+        }
+      }
+      setOutput(activationFn(weightedSum))
+      setShowForwardAnimation(false)
+    }, 500)
+  }, [neuron, inputs])
+
+  const trainCycle = useCallback(async () => {
+    if (!neuron) return
+    const target = inputs.reduce((a, b) => a + b, 0) / inputs.length
+    try {
+      const { data, error } = await neuronApi.train(neuron, inputs, [target], 0.01)
+      if (error) throw error
+      if (data) {
+        setNeuron(data.neuron)
+        setLastLoss(data.loss)
+        setLastGradient(data.gradient)
+        setCycleCount(c => c + 1)
+        setOutput(null)
+        return
+      }
+    } catch (err) {
+      console.error('Edge function not available, using local training')
+    }
+    const learningRate = 0.01
+    let weightedSum = neuron.bias
+    for (let i = 0; i < neuron.input_count; i++) {
+      weightedSum += inputs[i] * neuron.weights[i]
+    }
+    const pred = weightedSum
+    const loss = (pred - target) ** 2
+    const gradient = 2 * (pred - target)
+    const newNeuron: Neuron = {
+      ...neuron,
+      weights: neuron.weights.map((w, i) => w - learningRate * gradient * inputs[i]),
+      bias: neuron.bias - learningRate * gradient,
+    }
+    setNeuron(newNeuron)
+    setLastLoss(loss)
+    setLastGradient(gradient)
+    setCycleCount(c => c + 1)
+    setOutput(null)
+  }, [neuron, inputs])
+
+  const resetNeuron = () => {
+    createNeuron(neuron?.input_count || 3, neuron?.activation || 'relu')
+    setOutput(null)
+    setCycleCount(0)
+    setLastLoss(null)
+    setLastGradient(null)
+  }
+
+  const addInput = () => {
+    if (neuron && neuron.input_count < 10) {
+      setNeuron({
+        ...neuron,
+        input_count: neuron.input_count + 1,
+        weights: [...neuron.weights, Math.random() * 0.5 - 0.25],
+      })
+      setInputs([...inputs, Math.random()])
     }
   }
-  
-  const updateInput = (index: number, value: number) => {
-    const newInputs = [...inputs]
-    newInputs[index] = value
-    setInputs(newInputs)
+
+  const removeInput = () => {
+    if (neuron && neuron.input_count > 1) {
+      setNeuron({
+        ...neuron,
+        input_count: neuron.input_count - 1,
+        weights: neuron.weights.slice(0, -1),
+      })
+      setInputs(inputs.slice(0, -1))
+    }
   }
-  
-  const updateWeight = (index: number, value: number) => {
-    if (!neuron) return
-    const newWeights = [...neuron.weights]
-    newWeights[index] = value
-    setNeuron({ ...neuron, weights: newWeights })
-  }
-  
+
   if (!neuron) {
-    return (
-      <div className={styles.loading}>
-        <div className={styles.spinner} />
-        <p>Initializing neural network...</p>
-      </div>
-    )
+    return <div className={styles.loading}>Loading neuron...</div>
   }
-  
+
   return (
     <div className={styles.lab}>
-      <div className={styles.workspace}>
-        {/* Network Visualization Panel */}
-        <div className={styles.visualizationPanel}>
-          <div className={styles.panelHeader}>
-            <h2>
-              <Layers size={18} />
-              One Neuron
-            </h2>
-            <button 
-              className={styles.whyBtn}
-              onClick={() => getExplanation('neuron')}
-            >
-              <HelpCircle size={16} />
-              Why?
-            </button>
+      <header className={styles.header}>
+        <h1>CAMBRIC LABS</h1>
+        <p className={styles.subtitle}>Neural Network Laboratory</p>
+      </header>
+
+      <div className={styles.mainContent}>
+        <section className={styles.neuronSection}>
+          <h2>Your Neuron</h2>
+          <div className={styles.neuronVisual}>
+            <div className={styles.inputs}>
+              {inputs.map((val, i) => (
+                <div key={i} className={styles.inputNode}>
+                  <span className={styles.label}>Input {i + 1}</span>
+                  <input
+                    type="number"
+                    value={val}
+                    onChange={(e) => {
+                      const newInputs = [...inputs]
+                      newInputs[i] = parseFloat(e.target.value) || 0
+                      setInputs(newInputs)
+                    }}
+                    step="0.1"
+                  />
+                  <span className={styles.weight}>W{i + 1}: {neuron.weights[i]?.toFixed(3) || '0.000'}</span>
+                </div>
+              ))}
+            </div>
+            <div className={styles.neuron}>
+              <div className={styles.neuronInner}>
+                <Zap size={24} />
+                <span>NEURON</span>
+              </div>
+              <div className={styles.neuronStats}>
+                <span>Activation: {neuron.activation.toUpperCase()}</span>
+                <span>Bias: {neuron.bias.toFixed(3)}</span>
+              </div>
+            </div>
+            <div className={styles.output}>
+              <span className={styles.label}>Output</span>
+              <div className={styles.outputValue}>
+                {output !== null ? output.toFixed(4) : '—'}
+              </div>
+            </div>
           </div>
-          
-          <NeuronVisualization
-            inputs={inputs}
-            weights={neuron.weights}
-            bias={neuron.bias}
-            activation={neuron.activation}
-            output={neuron.last_output}
-            weightedSum={neuron.last_weighted_sum}
-          />
-          
+
           <div className={styles.controls}>
-            <button 
-              className={styles.watchBtn}
-              onClick={() => setShowForwardAnimation(true)}
-            >
-              <Eye size={16} />
-              Watch Forward Pass
+            <button onClick={runForward} disabled={showForwardAnimation}>
+              <Play size={16} /> Forward Pass
+            </button>
+            <button onClick={trainCycle} className={styles.primary}>
+              <Zap size={16} /> CYCLE
+            </button>
+            <button onClick={resetNeuron}>
+              <RotateCcw size={16} /> Reset
             </button>
           </div>
-        </div>
-        
-        {/* Inspector Panel */}
-        <div className={styles.inspectorPanel}>
-          <div className={styles.panelHeader}>
-            <h2>
-              <Settings size={18} />
-              Inspector
-            </h2>
+
+          <div className={styles.inputControls}>
+            <button onClick={removeInput} disabled={neuron.input_count <= 1}>
+              <Minus size={16} />
+            </button>
+            <span>{neuron.input_count} Inputs</span>
+            <button onClick={addInput} disabled={neuron.input_count >= 10}>
+              <Plus size={16} />
+            </button>
           </div>
-          
-          <div className={styles.inspectorContent}>
-            {/* Inputs Section */}
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h3>Inputs</h3>
-                <button 
-                  className={styles.smallWhyBtn}
-                  onClick={() => getExplanation('input')}
-                >
-                  <HelpCircle size={14} />
-                </button>
-              </div>
-              <div className={styles.inputGrid}>
-                {inputs.map((value, i) => (
-                  <div key={i} className={styles.inputItem}>
-                    <label>X{i + 1}</label>
-                    <div className={styles.inputControl}>
-                      <button onClick={() => updateInput(i, Math.max(0, value - 0.1))}>
-                        <Minus size={14} />
-                      </button>
-                      <span className={styles.valueDisplay}>{value.toFixed(2)}</span>
-                      <button onClick={() => updateInput(i, Math.min(1, value + 0.1))}>
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={value}
-                      onChange={(e) => updateInput(i, parseFloat(e.target.value))}
-                    />
-                  </div>
-                ))}
-              </div>
+        </section>
+
+        <section className={styles.trainingSection}>
+          <h2>Training Status</h2>
+          <div className={styles.stats}>
+            <div className={styles.stat}>
+              <span className={styles.statLabel}>Cycles</span>
+              <span className={styles.statValue}>{cycleCount}</span>
             </div>
-            
-            {/* Weights Section */}
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h3>Weights</h3>
-                <button 
-                  className={styles.smallWhyBtn}
-                  onClick={() => getExplanation('weight')}
-                >
-                  <HelpCircle size={14} />
-                </button>
-              </div>
-              <div className={styles.weightGrid}>
-                {neuron.weights.map((weight, i) => (
-                  <div key={i} className={styles.weightItem}>
-                    <label>W{i + 1}</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={weight.toFixed(3)}
-                      onChange={(e) => updateWeight(i, parseFloat(e.target.value) || 0)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Bias Section */}
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h3>Bias</h3>
-                <button 
-                  className={styles.smallWhyBtn}
-                  onClick={() => getExplanation('bias')}
-                >
-                  <HelpCircle size={14} />
-                </button>
-              </div>
-              <div className={styles.biasItem}>
-                <label>B</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={neuron.bias.toFixed(3)}
-                  onChange={(e) => setNeuron({ ...neuron, bias: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-            
-            {/* Activation Section */}
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <h3>Activation</h3>
-                <button 
-                  className={styles.smallWhyBtn}
-                  onClick={() => getExplanation('activation')}
-                >
-                  <HelpCircle size={14} />
-                </button>
-              </div>
-              <select
-                value={neuron.activation}
-                onChange={(e) => setNeuron({ ...neuron, activation: e.target.value })}
-                className={styles.activationSelect}
-              >
-                <option value="relu">ReLU</option>
-                <option value="sigmoid">Sigmoid</option>
-                <option value="tanh">Tanh</option>
-                <option value="identity">Identity</option>
-              </select>
-            </div>
-            
-            {/* Output Section */}
-            <div className={styles.section}>
-              <h3>Output</h3>
-              <div className={styles.outputDisplay}>
-                <span className={styles.outputValue}>
-                  {neuron.last_output?.toFixed(6) ?? '--'}
-                </span>
-              </div>
-              <button className={styles.computeBtn} onClick={computeForward}>
-                <Play size={16} />
-                Compute Output
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Training Panel */}
-        <div className={styles.trainingPanel}>
-          <div className={styles.panelHeader}>
-            <h2>
-              <Activity size={18} />
-              Training
-            </h2>
-          </div>
-          
-          <TrainingControls
-            learningRate={learningRate}
-            onLearningRateChange={setLearningRate}
-            onCycle={runCycle}
-            currentCycle={currentCycle}
-            loss={loss}
-            isTraining={false}
-          />
-          
-          {trainingHistory.length > 0 && (
-            <TrainingGraph data={trainingHistory} />
-          )}
-        </div>
-      </div>
-      
-      {/* Why Modal */}
-      {showWhy && explanation && (
-        <div className={styles.whyModal} onClick={() => setShowWhy(null)}>
-          <div className={styles.whyContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Why is there a {showWhy}?</h3>
-            
-            <div className={styles.explanationLevels}>
-              <div className={styles.level}>
-                <h4>Simple</h4>
-                <p>{explanation.simple}</p>
-              </div>
-              <div className={styles.level}>
-                <h4>Technical</h4>
-                <p>{explanation.technical}</p>
-              </div>
-            </div>
-            
-            {explanation.analogy && (
-              <div className={styles.level}>
-                <h4>Analogy</h4>
-                <p>{explanation.analogy}</p>
+            {lastLoss !== null && (
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>Last Loss</span>
+                <span className={styles.statValue}>{lastLoss.toFixed(6)}</span>
               </div>
             )}
-            
-            <button className={styles.closeWhy} onClick={() => setShowWhy(null)}>
-              Got it
+            {lastGradient !== null && (
+              <div className={styles.stat}>
+                <span className={styles.statLabel}>Gradient</span>
+                <span className={styles.statValue}>{lastGradient.toFixed(6)}</span>
+              </div>
+            )}
+          </div>
+          {lastLoss !== null && (
+            <div className={styles.weightChanges}>
+              <h3>Weight Changes</h3>
+              {neuron.weights.map((w, i) => (
+                <div key={i} className={styles.weightChange}>
+                  <span>Weight {i + 1}: {w.toFixed(4)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className={styles.learnSection}>
+          <div className={styles.learnHeader}>
+            <button className={explainMode === 'simple' ? styles.active : ''} onClick={() => setExplainMode('simple')}>
+              <BookOpen size={16} /> Simple
+            </button>
+            <button className={explainMode === 'technical' ? styles.active : ''} onClick={() => setExplainMode('technical')}>
+              <Code size={16} /> Technical
             </button>
           </div>
-        </div>
-      )}
-      
-      {/* Forward Pass Animation Modal */}
-      {showForwardAnimation && (
-        <ForwardPassAnimation
-          inputs={inputs}
-          weights={neuron.weights}
-          bias={neuron.bias}
-          activation={neuron.activation}
-          onClose={() => setShowForwardAnimation(false)}
-        />
-      )}
+          <div className={styles.explanation}>
+            <h3>What is a Neuron?</h3>
+            {explainMode === 'simple' ? (
+              <p>A neuron is like a tiny decision maker. It takes numbers (inputs), multiplies them by weights (how much to pay attention), adds them up, and decides what to output.</p>
+            ) : (
+              <p>A neuron computes a weighted sum of inputs: y = f(Σwᵢxᵢ + b), where f is the activation function, w are weights, x are inputs, and b is the bias.</p>
+            )}
+            <h3>What is Training?</h3>
+            {explainMode === 'simple' ? (
+              <p>Training means adjusting the weights so the neuron makes better decisions. We show it an example, see what it outputs, and nudge the weights slightly in the right direction.</p>
+            ) : (
+              <p>Training uses gradient descent to minimize loss. We compute the gradient of loss with respect to each weight and update: w = w - lr * ∂L/∂w</p>
+            )}
+            <h3>What is a Cycle?</h3>
+            {explainMode === 'simple' ? (
+              <p>One cycle shows the neuron one training example, calculates how wrong it was, and adjusts the weights a tiny bit.</p>
+            ) : (
+              <p>A training cycle computes one forward pass, calculates loss, computes gradients via backpropagation, and applies weight updates.</p>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }
