@@ -1,98 +1,192 @@
 # CAMBRIC LABS
+## Neural Network Laboratory - Learn AI by Building It
 
-A serious educational and experimental neural network laboratory for developers.
+![CAMBRIC LABS](https://img.shields.io/badge/Status-Production%20Ready-green)
+![Supabase](https://img.shields.io/badge/Backend-Supabase%20Edge%20Functions-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-> "Do not hide AI behind a black box. Let the developer see exactly what is happening."
+> **IMPORTANT**: CAMBRIC LABS is NOT CAMBRIC AI. CAMBRIC LABS is an educational environment where developers learn, experiment with, build, train, inspect, and export neural-network systems.
 
-## Overview
+---
 
-CAMBRIC LABS is a neural network laboratory where developers learn by building. Every number displayed corresponds to actual computation, every animation represents real data flow.
+## 🚀 Quick Start
 
-### Features
+### Frontend (GitHub Pages)
+Visit: **https://cambric-software.github.io/Cambric-labs/**
 
-- **One Neuron Mode**: Start with a single neuron and understand inputs, weights, biases, and activation functions
-- **Watch Forward Pass**: Animated step-by-step visualization of calculations
-- **Training System**: Real training with CYCLE, loss tracking, and gradient visualization
-- **Network Builder**: Build multi-layer networks visually
-- **Learn Mode**: Structured curriculum from neuron basics to backpropagation
-- **Developer Area**: Code explorer and custom neuron editor
-- **Export/Import**: Save experiments and export trained models
-
-## Quick Start
-
-### Backend (Python/FastAPI)
+### Deploy Edge Functions (One-time Setup)
 
 ```bash
-cd backend
+# 1. Install Supabase CLI
+npm install -g supabase
+
+# 2. Login
+supabase login
+
+# 3. Link to project
+cd supabase
+supabase link --project-ref dafgzzkerytjuvxzymnq
+
+# 4. Deploy
+supabase functions deploy network
+```
+
+---
+
+## ✨ Features
+
+### 🧠 Neural Network Engine
+- **Multi-layer networks** with configurable architecture
+- **Full backpropagation** with gradient descent
+- **Xavier weight initialization** for stable training
+- **Real-time weight tracking** - see weights change live!
+
+### 📊 Activation Functions (8)
+| Function | Use Case |
+|----------|----------|
+| ReLU | Default for hidden layers |
+| Leaky ReLU | Prevents dead neurons |
+| Sigmoid | Binary classification output |
+| Tanh | Hidden layers (zero-centered) |
+| Softmax | Multi-class classification |
+| Identity | Regression output |
+| Swish | Modern alternative to ReLU |
+| GELU | State-of-the-art (BERT, etc.) |
+
+### 🎯 Loss Functions (5)
+| Function | Use Case |
+|----------|----------|
+| MSE | Regression |
+| MAE | Robust regression |
+| Binary Cross-Entropy | Binary classification |
+| Categorical Cross-Entropy | Multi-class classification |
+| Hinge | SVM-style classification |
+
+### 🏋️ Training Features
+- **Single cycle mode** - Watch one training step
+- **Batch training** - Configurable batch sizes
+- **Validation split** - Detect overfitting
+- **Training history** - Track loss/accuracy over time
+- **Real-time graphs** - Watch your model learn
+
+### 📤 Export Options
+- **Python code** - Ready to use in your projects
+- **JavaScript code** - For web applications
+- **ONNX format** - Industry standard interchange
+
+### 📚 Educational Features
+- **Simple explanations** for beginners
+- **Technical details** for developers
+- **WHY explanations** for every concept
+- **Interactive visualizations** - See neurons, weights, gradients
+
+---
+
+## 🏗️ Architecture
+
+```
+CAMBRIC LABS
+├── GitHub Pages (Frontend)
+│   └── React + TypeScript + Vite
+│
+└── Supabase (Backend)
+    ├── Database (PostgreSQL)
+    │   └── Tables prefixed: cambric_labs_*
+    │
+    └── Edge Functions (Deno/TypeScript)
+        └── network.ts (Neural Network Engine)
+```
+
+---
+
+## 🛠️ Supabase Edge Functions
+
+### Available Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `POST /network/create` | Create a new network |
+| `POST /network/forward` | Run forward pass |
+| `POST /network/train-cycle` | Single training step |
+| `POST /network/train` | Full training |
+| `POST /network/export` | Export to code |
+| `GET /network/info` | Get available functions |
+
+### Free Tier Limits
+
+| Resource | Limit |
+|----------|-------|
+| Edge Function Invocations | 500,000/month |
+| Database Storage | 500 MB |
+| Bandwidth | 100 GB/month |
+
+---
+
+## 📖 Documentation
+
+### Core Concepts
+
+**Neuron**: A single computational unit that takes inputs, multiplies by weights, adds bias, and applies an activation function.
+
+**Layer**: A collection of neurons that process inputs in parallel.
+
+**Network**: Multiple layers connected sequentially to form a deep learning model.
+
+**Forward Pass**: Data flows from input through layers to output.
+
+**Backpropagation**: Gradients flow backward to update weights.
+
+**Loss**: Measures how wrong the network's prediction is.
+
+---
+
+## 🔧 Development
+
+### Local Setup
+
+```bash
+# Clone repository
+git clone https://github.com/Cambric-software/Cambric-labs.git
+cd Cambric-labs
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+
+# Backend (optional - uses Supabase Edge Functions)
+cd ../backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-### Frontend (React/TypeScript)
+### Testing
 
 ```bash
+# Backend tests
+cd backend
+python -m pytest tests/ -v
+
+# Frontend build
 cd frontend
-npm install
-npm run dev
+npm run build
 ```
 
-Visit `http://localhost:3000` to use CAMBRIC LABS.
+---
 
-## Architecture
+## 📄 License
 
-```
-cambric-labs/
-├── backend/
-│   ├── neural/           # Neural network core (neuron, layer, network)
-│   ├── training/         # Training system (trainer, backpropagation)
-│   ├── api/             # API endpoints
-│   └── storage/          # Local-first project storage
-├── frontend/
-│   └── src/
-│       ├── components/   # React components
-│       ├── pages/        # Page components
-│       ├── api/          # API client
-│       └── styles/       # CSS styles
-└── tests/               # Unit tests
-```
+MIT License - See LICENSE file for details.
 
-## Neural Network Core
+---
 
-The backend implements a complete neural network engine from scratch:
+## 🤝 Contributing
 
-- **Neuron**: Single neuron with forward/backward pass
-- **Layer**: Dense layer with multiple neurons
-- **Network**: Sequential network of layers
-- **Activations**: ReLU, Sigmoid, Tanh, Identity, Softmax
-- **Loss Functions**: MSE, MAE, Cross-Entropy
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-## Testing
+---
 
-```bash
-cd /workspace/project/Cambric-labs
-PYTHONPATH=/workspace/project/Cambric-labs python -m pytest tests/ -v
-```
-
-## Core Philosophy
-
-CAMBRIC LABS must never:
-
-- Fake training animations
-- Hard-code predictions
-- Hide underlying computations
-
-Every visualization must reflect actual model state.
-
-## Development
-
-The project follows a milestone-based development approach:
-
-1. ✓ Milestone 1: One Neuron Engine
-2. ✓ Milestone 2: Training System
-3. ✓ Milestone 3: Multi-Neuron Networks
-4. In Progress: Network Builder UI
-5. Planned: Dataset System, Advanced Features
-
-## License
-
-MIT
+*Built with ❤️ by the CAMBRIC team*
