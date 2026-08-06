@@ -217,6 +217,110 @@
   color: var(--lab-text-muted);
 }
 
+.emptyIcon {
+  color: var(--lab-border);
+  margin-bottom: var(--lab-space-4);
+}
+
+.emptyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  margin-top: var(--lab-space-4);
+  padding: var(--lab-space-3) var(--lab-space-6);
+  background: var(--lab-accent-blue);
+  color: var(--lab-bg-primary);
+  font-weight: 600;
+  border-radius: var(--lab-radius-md);
+  transition: all var(--lab-transition-fast);
+}
+
+.emptyBtn:hover {
+  background: var(--lab-accent-cyan);
+}
+
+.experimentLink {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-4);
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--lab-radius-sm);
+  color: var(--lab-text-muted);
+  cursor: pointer;
+  transition: all var(--lab-transition-fast);
+}
+
+.deleteBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--lab-accent-red);
+  color: var(--lab-accent-red);
+}
+
+.deleteConfirm {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: var(--lab-bg-primary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-md);
+  padding: var(--lab-space-3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.deleteConfirm span {
+  display: block;
+  font-size: var(--lab-text-sm);
+  margin-bottom: var(--lab-space-2);
+  color: var(--lab-text-primary);
+}
+
+.deleteConfirmActions {
+  display: flex;
+  gap: var(--lab-space-2);
+}
+
+.deleteConfirmActions button {
+  padding: var(--lab-space-1) var(--lab-space-3);
+  border-radius: var(--lab-radius-sm);
+  font-size: var(--lab-text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--lab-transition-fast);
+}
+
+.deleteConfirmActions button:first-child {
+  background: var(--lab-accent-red);
+  border: 1px solid var(--lab-accent-red);
+  color: white;
+}
+
+.deleteConfirmActions button:first-child:hover {
+  background: #dc2626;
+}
+
+.deleteConfirmActions button:last-child {
+  background: transparent;
+  border: 1px solid var(--lab-border);
+  color: var(--lab-text-secondary);
+}
+
+.deleteConfirmActions button:last-child:hover {
+  background: var(--lab-bg-tertiary);
+}
+
 /* Principles Section */
 .principles {
   margin-bottom: var(--lab-space-12);
