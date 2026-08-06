@@ -1,0 +1,136 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--lab-bg-primary);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 var(--lab-space-6);
+  background: var(--lab-bg-secondary);
+  border-bottom: 1px solid var(--lab-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-3);
+}
+
+.logoText {
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-lg);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--lab-text-primary);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  padding: var(--lab-space-2) var(--lab-space-4);
+  border-radius: var(--lab-radius-md);
+  color: var(--lab-text-secondary);
+  font-size: var(--lab-text-sm);
+  font-weight: 500;
+  transition: all var(--lab-transition-fast);
+}
+
+.navItem:hover {
+  background: var(--lab-bg-tertiary);
+  color: var(--lab-text-primary);
+}
+
+.navItem.active {
+  background: rgba(88, 166, 255, 0.15);
+  color: var(--lab-accent-blue);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-4);
+}
+
+.settingsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--lab-radius-md);
+  color: var(--lab-text-secondary);
+  transition: all var(--lab-transition-fast);
+}
+
+.settingsBtn:hover {
+  background: var(--lab-bg-tertiary);
+  color: var(--lab-text-primary);
+}
+
+/* Main Content */
+.main {
+  flex: 1;
+  padding: var(--lab-space-6);
+  overflow-y: auto;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 var(--lab-space-6);
+  background: var(--lab-bg-secondary);
+  border-top: 1px solid var(--lab-border);
+  font-size: var(--lab-text-xs);
+  color: var(--lab-text-muted);
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lab-accent-green);
+}
+
+.footerInfo {
+  font-family: var(--lab-font-mono);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding: 0 var(--lab-space-4);
+  }
+  
+  .navItem span {
+    display: none;
+  }
+  
+  .logoText {
+    display: none;
+  }
+}

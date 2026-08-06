@@ -1,0 +1,38 @@
+.container {
+  padding: var(--lab-space-4);
+  border-top: 1px solid var(--lab-border);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--lab-space-3);
+}
+
+.header h4 {
+  font-size: var(--lab-text-sm);
+  font-weight: 600;
+  color: var(--lab-text-secondary);
+}
+
+.latest {
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-xs);
+  color: var(--lab-accent-red);
+}
+
+.canvas {
+  width: 100%;
+  height: 150px;
+  background: var(--lab-bg-primary);
+  border-radius: var(--lab-radius-md);
+}
+
+.empty {
+  padding: var(--lab-space-6);
+  text-align: center;
+  color: var(--lab-text-muted);
+  font-size: var(--lab-text-sm);
+  border-top: 1px solid var(--lab-border);
+}
