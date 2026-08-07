@@ -118,7 +118,7 @@ export default function LabPage() {
   const trainCycle = useCallback(() => {
     if (!network) return
     
-    const result = network.trainCycle(inputs, [target], learningRate)
+    const result = network.trainCycle(inputs, [target])
     
     setOutput(result.predictions[0])
     setLastLoss(result.loss)
