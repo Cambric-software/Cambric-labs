@@ -711,11 +711,13 @@
       // Look for Windows and Android assets
       const assets = release.assets || [];
       
+      // Windows: Use portable exe for easier distribution
       const windowsAsset = assets.find(a => 
-        a.name.toLowerCase().includes('windows') && a.name.endsWith('.exe')
+        a.name.includes('portable') && a.name.endsWith('.exe')
       );
+      // Android: Use release unsigned APK
       const androidAsset = assets.find(a => 
-        a.name.toLowerCase().includes('android') && a.name.endsWith('.apk')
+        a.name.includes('release-unsigned') && a.name.endsWith('.apk')
       );
 
       if (windowsBtn && windowsAsset) {
