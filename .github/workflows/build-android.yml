@@ -94,23 +94,27 @@ jobs:
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
             echo "Signing secrets found, configuring release signing..."
             echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
-            # Configure signing in app/build.gradle
-            if grep -q "signingConfigs {" app/build.gradle; then
-              echo "Signing config already exists"
+            # Configure signing in app/build.gradle using sed
+            if ! grep -q "signingConfigs" app/build.gradle; then
+              echo '' >> app/build.gradle
+              echo 'android {' >> app/build.gradle
+              echo '    signingConfigs {' >> app/build.gradle
+              echo '        release {' >> app/build.gradle
+              echo '            storeFile file("keystore.jks")' >> app/build.gradle
+              echo '            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")' >> app/build.gradle
+              echo '            keyAlias System.getenv("ANDROID_KEY_ALIAS")' >> app/build.gradle
+              echo '            keyPassword System.getenv("ANDROID_KEY_PASSWORD")' >> app/build.gradle
+              echo '        }' >> app/build.gradle
+              echo '    }' >> app/build.gradle
+              echo '    buildTypes {' >> app/build.gradle
+              echo '        release {' >> app/build.gradle
+              echo '            signingConfig signingConfigs.release' >> app/build.gradle
+              echo '        }' >> app/build.gradle
+              echo '    }' >> app/build.gradle
+              echo '}' >> app/build.gradle
+              echo "Added signing config to build.gradle"
             else
-              # Add signing config to the android block
-              sed -i '/android {/,/}/ {
-                /defaultConfig {/i\
-    signingConfigs {\
-        release {\
-            storeFile file("keystore.jks")\
-            storePassword "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"\
-            keyAlias "${{ secrets.ANDROID_KEY_ALIAS }}"\
-            keyPassword "${{ secrets.ANDROID_KEY_PASSWORD }}"\
-        }\
-    }
-              }' app/build.gradle
-              sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' app/build.gradle
+              echo "Signing config already exists"
             fi
             echo "signing_enabled=true" >> $GITHUB_OUTPUT
           else
@@ -124,6 +128,9 @@ jobs:
           ./gradlew assembleRelease
         env:
           VERSION_NAME: ${{ github.event.inputs.version || github.ref_name }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: Build Debug APK
         run: |
