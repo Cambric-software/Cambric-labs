@@ -41,15 +41,25 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Check frontend build output
+        run: |
+          ls -la docs/
+
       - name: Initialize Capacitor
         run: |
           cd frontend
-          npx cap init "CAMBRIC LABS" "com.cambric.labs" --web-dir=../docs
+          # Initialize Capacitor only if not already initialized
+          if [ ! -f "capacitor.config.ts" ]; then
+            npx cap init "CAMBRIC LABS" "com.cambric.labs" --web-dir=../docs
+          fi
 
       - name: Add Android platform
         run: |
           cd frontend
-          npx cap add android
+          # Add Android only if not already present
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
 
       - name: Sync Capacitor to Android
         run: |
