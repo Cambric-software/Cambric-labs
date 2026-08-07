@@ -140,33 +140,45 @@ jobs:
       - name: Verify Release APK
         run: |
           echo "=== Verifying Release APK ==="
-          APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
-          if [ -f "$APK_PATH" ]; then
-            echo "✓ Release APK found: $APK_PATH"
-            ls -lh "$APK_PATH"
-            
-            # Check if APK is signed
-            if command -v apksigner &> /dev/null; then
-              apksigner verify --print-certs "$APK_PATH" || echo "apksigner check failed, checking manually..."
-            fi
-            
-            # Check APK structure
-            if command -v unzip &> /dev/null; then
-              unzip -l "$APK_PATH" | head -20
-            fi
+          # Check for signed or unsigned release APK
+          SIGNED_APK="frontend/android/app/build/outputs/apk/release/app-release.apk"
+          UNSIGNED_APK="frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk"
+          APK_PATH=""
+          
+          if [ -f "$SIGNED_APK" ]; then
+            APK_PATH="$SIGNED_APK"
+            echo "✓ Signed Release APK found: $APK_PATH"
+          elif [ -f "$UNSIGNED_APK" ]; then
+            APK_PATH="$UNSIGNED_APK"
+            echo "⚠ Unsigned Release APK found: $APK_PATH"
+            echo "Note: Set ANDROID_KEYSTORE_BASE64 secret to build a signed APK"
           else
-            echo "✗ Release APK NOT found at $APK_PATH"
+            echo "✗ Release APK NOT found"
             echo "Available files:"
             find frontend/android/app/build/outputs -name "*.apk" 2>/dev/null || echo "No APKs found"
             exit 1
+          fi
+          
+          ls -lh "$APK_PATH"
+          
+          # Check APK structure
+          if command -v unzip &> /dev/null; then
+            echo "APK contents:"
+            unzip -l "$APK_PATH" 2>/dev/null | head -30
           fi
 
       - name: Rename Release APK
         run: |
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
           VERSION="${VERSION#v}"  # Remove 'v' prefix if present
-          APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
-          RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}.apk"
+          # Check for signed or unsigned APK
+          if [ -f "frontend/android/app/build/outputs/apk/release/app-release.apk" ]; then
+            APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
+            RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}.apk"
+          else
+            APK_PATH="frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk"
+            RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}-unsigned.apk"
+          fi
           if [ -f "$APK_PATH" ]; then
             cp "$APK_PATH" "$RENAMED_PATH"
             echo "✓ Renamed APK to: $RENAMED_PATH"
