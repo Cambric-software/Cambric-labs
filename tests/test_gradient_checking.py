@@ -402,13 +402,15 @@ class TestNumericalSafety:
     
     def test_sigmoid_handles_large_values(self):
         """Sigmoid should handle large inputs without overflow."""
-        neuron = Neuron(input_count=1, activation='sigmoid')
+        # Use weight=1.0 and bias=0.0 so that sigmoid(100) is tested directly
+        # (not sigmoid(weight * 100) with random weight)
+        neuron = Neuron(input_count=1, weights=[1.0], bias=0.0, activation='sigmoid')
         
-        # Very large positive
+        # Very large positive: sigmoid(100) ≈ 1.0
         result = neuron.forward([100.0])
         assert result['output'] > 0.999
         
-        # Very large negative
+        # Very large negative: sigmoid(-100) ≈ 0.0
         result = neuron.forward([-100.0])
         assert result['output'] < 1e-10  # essentially zero
 

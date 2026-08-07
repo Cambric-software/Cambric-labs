@@ -155,10 +155,22 @@ class Layer:
         input_gradients = np.zeros(self.input_dim)
         neuron_gradients = []
         
+        # Store gradients for all neurons (needed for update())
+        # Each neuron.backward() call sets the neuron's _last_gradients
+        self._last_gradients = []
+        
         for i, (neuron, gradient) in enumerate(zip(self.neurons, output_gradients)):
+            # Each neuron.backward() call:
+            # 1. Computes gradients (dL/dw, dL/db, dL/dx)
+            # 2. Stores gradients in neuron's _last_gradients (for later update)
+            # 3. Returns GradientResult with all computed gradients
             grad_result = neuron.backward(gradient)
             
+            # Store gradient result for this neuron (needed for layer.update())
+            self._last_gradients.append(grad_result)
+            
             # Accumulate input gradients for previous layer
+            # Each weight w_i contributes dL/dz * x_i to the input gradient
             input_gradients += grad_result.input_gradients
             
             neuron_gradients.append({
@@ -168,9 +180,6 @@ class Layer:
                 'input_gradients': grad_result.input_gradients.tolist(),
                 'activation_gradient': grad_result.activation_gradient
             })
-        
-        self._last_gradients = [n.backward(g) for n, g in 
-                                zip(self.neurons, output_gradients)]
         
         return {
             'input_gradients': input_gradients.tolist(),
