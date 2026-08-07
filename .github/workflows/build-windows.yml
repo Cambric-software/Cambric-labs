@@ -1,0 +1,115 @@
+name: Build Windows Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.1.0)'
+        required: true
+        default: '0.1.0'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Install Electron dependencies
+        run: |
+          cd electron
+          npm install
+
+      - name: Create build directory
+        run: |
+          mkdir -p electron/build
+          # Create a simple icon placeholder (will be replaced with actual icon)
+          powershell -Command "Add-Type -AssemblyName System.Drawing; $bmp = New-Object System.Drawing.Bitmap(256, 256); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::FromArgb(10, 10, 15)); $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(0, 200, 100)); $g.FillEllipse($brush, 28, 28, 200, 200); $bmp.Save('electron/build/icon.png', [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose()"
+
+      - name: Build Windows executable
+        run: |
+          cd electron
+          npm run build
+        env:
+          VERSION: ${{ github.event.inputs.version || github.ref_name }}
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: cambric-labs-windows-${{ github.event.inputs.version || github.ref_name }}
+          path: electron/release/**/*.exe
+          retention-days: 30
+
+      - name: Upload portable version
+        uses: actions/upload-artifact@v4
+        with:
+          name: cambric-labs-windows-portable-${{ github.event.inputs.version || github.ref_name }}
+          path: electron/release/**/*portable*.exe
+          retention-days: 30
+
+  create-release:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/**/*.exe
+          body: |
+            ## CAMBRIC LABS v${{ github.ref_name }}
+            
+            ### Download
+            - **Installer**: CAMBRIC-LABS-Setup-*.exe
+            - **Portable**: CAMBRIC-LABS-*-portable.exe (no installation required)
+            
+            ### Features
+            - Local neural network training (no internet required)
+            - Create and train neural networks
+            - Visualize weights and gradients
+            - Export trained models
+            
+            ### System Requirements
+            - Windows 10 or later
+            - 4GB RAM minimum
+            - 200MB disk space
+            
+            ### Installation
+            1. Download the installer or portable version
+            2. Run the installer (or extract the portable version)
+            3. Launch CAMBRIC LABS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
