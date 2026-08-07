@@ -43,9 +43,8 @@ jobs:
 
       - name: Create build directory
         run: |
-          mkdir -p electron/build
-          # Create a simple icon placeholder (will be replaced with actual icon)
-          powershell -Command "Add-Type -AssemblyName System.Drawing; $bmp = New-Object System.Drawing.Bitmap(256, 256); $g = [System.Drawing.Graphics]::FromImage($bmp); $g.Clear([System.Drawing.Color]::FromArgb(10, 10, 15)); $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(0, 200, 100)); $g.FillEllipse($brush, 28, 28, 200, 200); $bmp.Save('electron/build/icon.png', [System.Drawing.Imaging.ImageFormat]::Png); $g.Dispose(); $bmp.Dispose()"
+          if not exist electron\build mkdir electron\build
+          if exist electron\build\icon.png echo Icon already exists
 
       - name: Build Windows executable
         run: |
