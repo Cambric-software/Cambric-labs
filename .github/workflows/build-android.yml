@@ -78,14 +78,36 @@ jobs:
       - name: Build Android APK
         run: |
           cd frontend/android
-          ./gradlew clean assembleRelease
+          # Create gradle.properties to resolve Kotlin version conflicts
+          cat > gradle.properties << 'PROPS'
+android.useAndroidX=true
+android.enableJetifier=true
+kotlin.code.style=official
+org.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError
+PROPS
+          
+          # Add resolution strategy to app/build.gradle to fix Kotlin duplicate classes
+          if [ -f app/build.gradle ]; then
+            if ! grep -q "resolutionStrategy" app/build.gradle; then
+              echo '
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
+    }
+}' >> app/build.gradle
+            fi
+          fi
+          
+          ./gradlew assembleRelease
         env:
           VERSION_NAME: ${{ github.event.inputs.version || github.ref_name }}
 
       - name: Build Android Debug APK
         run: |
           cd frontend/android
-          ./gradlew clean assembleDebug
+          ./gradlew assembleDebug
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
