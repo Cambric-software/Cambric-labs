@@ -1,9 +1,38 @@
-# CAMBRIC LABS - Supabase Edge Functions
+# CAMBRIC LABS - Supabase Edge Functions (LEGACY)
 
-## Overview
+## ⚠️ DEPRECATED - Local-First Architecture
 
-This folder contains Supabase Edge Functions that handle the neural network backend logic.
-No separate server needed - everything runs on Supabase!
+**This folder contains legacy code from the cloud-based version of CAMBRIC LABS.**
+
+The current version of CAMBRIC LABS is **local-first**:
+- All neural network computation happens in the browser/app
+- No Supabase or cloud backend required
+- No account required
+- Works completely offline
+- Your data never leaves your device
+
+## Current Architecture
+
+```
+CAMBRIC LABS (Local)
+├── Desktop App (Electron) - JavaScript Neural Engine
+├── Mobile App (Capacitor) - JavaScript Neural Engine
+└── Web App (GitHub Pages) - JavaScript Neural Engine
+```
+
+## Historical Context
+
+This folder contains the original Supabase Edge Functions that were used when
+CAMBRIC LABS relied on a cloud backend. These functions are no longer
+maintained and may not work with the current version.
+
+If you want to use a cloud-based version for collaborative features or
+server-side training, you would need to update these functions to match
+the current JavaScript neural engine implementation.
+
+## Overview (Historical)
+
+This folder contained Supabase Edge Functions that handle the neural network backend logic.
 
 ## Deploying Edge Functions
 

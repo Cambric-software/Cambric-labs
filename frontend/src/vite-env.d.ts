@@ -1,14 +1,7 @@
 /// <reference types="vite/client" />
 
-interface ImportMetaEnv {
-  readonly VITE_SUPABASE_URL: string
-  readonly VITE_SUPABASE_ANON_KEY: string
-  readonly VITE_API_URL: string
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv
-}
+// Local-first mode: No external API keys required
+// CAMBRIC LABS runs entirely in the browser
 
 declare module '*.module.css' {
   const classes: { [key: string]: string }

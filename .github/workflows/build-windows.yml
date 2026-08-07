@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 0.1.0)'
+        description: 'Version number (e.g., 0.1.6)'
         required: true
-        default: '0.1.0'
+        default: '0.1.6'
   push:
     tags:
       - 'v*'
@@ -56,10 +56,16 @@ jobs:
         env:
           VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
+      - name: Verify Windows executables
+        run: |
+          echo "=== Verifying Windows Executables ==="
+          echo "Release files:"
+          Get-ChildItem electron/release -Filter "*.exe" -Recurse | Select-Object Name, Length, LastWriteTime
+          
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
-          name: cambric-labs-windows-${{ github.event.inputs.version || github.ref_name }}
+          name: cambric-labs-windows
           path: |
             electron/release/**/*.exe
             !electron/release/**/*portable*.exe
@@ -68,7 +74,7 @@ jobs:
       - name: Upload portable version
         uses: actions/upload-artifact@v4
         with:
-          name: cambric-labs-windows-portable-${{ github.event.inputs.version || github.ref_name }}
+          name: cambric-labs-windows-portable
           path: electron/release/**/*portable*.exe
           retention-days: 30
 
@@ -98,24 +104,41 @@ jobs:
           body: |
             ## CAMBRIC LABS v${{ github.ref_name }}
             
-            ### Download
-            - **Installer**: CAMBRIC-LABS-Setup-*.exe
-            - **Portable**: CAMBRIC-LABS-*-portable.exe (no installation required)
+            ### Downloads
+            - **Windows Installer**: CAMBRIC-LABS-*-Setup.exe
+            - **Windows Portable**: CAMBRIC-LABS-*-portable.exe (no installation required)
+            - **Android**: Cambric-Labs-Android-*.apk
             
             ### Features
             - Local neural network training (no internet required)
             - Create and train neural networks
             - Visualize weights and gradients
             - Export trained models
+            - Works completely offline
+            - No account required
             
             ### System Requirements
+            
+            **Windows:**
             - Windows 10 or later
             - 4GB RAM minimum
             - 200MB disk space
             
+            **Android:**
+            - Android 7.0 (API 24) or later
+            - 2GB RAM minimum
+            - 100MB storage space
+            
             ### Installation
+            
+            **Windows:**
             1. Download the installer or portable version
             2. Run the installer (or extract the portable version)
             3. Launch CAMBRIC LABS
+            
+            **Android:**
+            1. Download the APK to your Android device
+            2. Enable "Install from unknown sources" in settings
+            3. Open the APK file to install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

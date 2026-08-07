@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.cambric.labs',
   appName: 'CAMBRIC LABS',
-  webDir: '../docs',
+  webDir: '../docs/app',
   bundledWebRuntime: false,
   android: {
     backgroundColor: '#0a0a0f',

@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., 0.1.0)'
+        description: 'Version number (e.g., 0.1.6)'
         required: true
-        default: '0.1.0'
+        default: '0.1.6'
   push:
     tags:
       - 'v*'
@@ -46,13 +46,14 @@ jobs:
       - name: Check frontend build output
         run: |
           ls -la docs/
+          ls -la docs/app/ 2>/dev/null || echo "No app directory found"
 
       - name: Initialize Capacitor
         run: |
           cd frontend
           # Initialize Capacitor only if not already initialized
           if [ ! -f "capacitor.config.ts" ]; then
-            npx cap init "CAMBRIC LABS" "com.cambric.labs" --web-dir=../docs
+            npx cap init "CAMBRIC LABS" "com.cambric.labs" --web-dir=../docs/app
           fi
 
       - name: Add Android platform
@@ -77,7 +78,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
 
-      - name: Build Android APK
+      - name: Configure Release Signing
         run: |
           cd frontend/android
           # Create gradle.properties to resolve Kotlin version conflicts
@@ -86,26 +87,97 @@ jobs:
           if [ -f app/build.gradle ] && ! grep -q "resolutionStrategy" app/build.gradle; then
             printf '\nconfigurations.all {\n    resolutionStrategy {\n        force "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"\n        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"\n        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"\n    }\n}\n' >> app/build.gradle
           fi
+
+      - name: Create Signing Config
+        id: signing
+        run: |
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Signing secrets found, configuring release signing..."
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+            # Configure signing in app/build.gradle
+            if grep -q "signingConfigs {" app/build.gradle; then
+              echo "Signing config already exists"
+            else
+              # Add signing config to the android block
+              sed -i '/android {/,/}/ {
+                /defaultConfig {/i\
+    signingConfigs {\
+        release {\
+            storeFile file("keystore.jks")\
+            storePassword "${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"\
+            keyAlias "${{ secrets.ANDROID_KEY_ALIAS }}"\
+            keyPassword "${{ secrets.ANDROID_KEY_PASSWORD }}"\
+        }\
+    }
+              }' app/build.gradle
+              sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/' app/build.gradle
+            fi
+            echo "signing_enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "No signing secrets found, building unsigned release..."
+            echo "signing_enabled=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Release APK
+        run: |
+          cd frontend/android
           ./gradlew assembleRelease
         env:
           VERSION_NAME: ${{ github.event.inputs.version || github.ref_name }}
 
-      - name: Build Android Debug APK
+      - name: Build Debug APK
         run: |
           cd frontend/android
           ./gradlew assembleDebug
 
+      - name: Verify Release APK
+        run: |
+          echo "=== Verifying Release APK ==="
+          APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
+          if [ -f "$APK_PATH" ]; then
+            echo "✓ Release APK found: $APK_PATH"
+            ls -lh "$APK_PATH"
+            
+            # Check if APK is signed
+            if command -v apksigner &> /dev/null; then
+              apksigner verify --print-certs "$APK_PATH" || echo "apksigner check failed, checking manually..."
+            fi
+            
+            # Check APK structure
+            if command -v unzip &> /dev/null; then
+              unzip -l "$APK_PATH" | head -20
+            fi
+          else
+            echo "✗ Release APK NOT found at $APK_PATH"
+            echo "Available files:"
+            find frontend/android/app/build/outputs -name "*.apk" 2>/dev/null || echo "No APKs found"
+            exit 1
+          fi
+
+      - name: Rename Release APK
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
+          RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}.apk"
+          if [ -f "$APK_PATH" ]; then
+            cp "$APK_PATH" "$RENAMED_PATH"
+            echo "✓ Renamed APK to: $RENAMED_PATH"
+            ls -lh "$RENAMED_PATH"
+          fi
+
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: cambric-labs-android-release-${{ github.event.inputs.version || github.ref_name }}
-          path: frontend/android/app/build/outputs/apk/release/*.apk
+          name: cambric-labs-android-release
+          path: |
+            frontend/android/app/build/outputs/apk/release/*.apk
           retention-days: 30
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: cambric-labs-android-debug-${{ github.event.inputs.version || github.ref_name }}
+          name: cambric-labs-android-debug
           path: frontend/android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
@@ -131,26 +203,43 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/**/*.apk
+            artifacts/cambric-labs-android-release/*.apk
           body: |
-            ## CAMBRIC LABS Android v${{ github.ref_name }}
+            ## CAMBRIC LABS v${{ github.ref_name }}
             
             ### Downloads
-            - **Release APK**: For production use
-            - **Debug APK**: For testing
+            - **Windows Installer**: CAMBRIC-LABS-*-Setup.exe
+            - **Windows Portable**: CAMBRIC-LABS-*-portable.exe (no installation required)
+            - **Android**: Cambric-Labs-Android-*.apk
             
             ### Features
             - Local neural network training (no internet required)
-            - Create and train small neural networks
+            - Create and train neural networks
             - Visualize weights and gradients
-            - Save and load projects locally
+            - Export trained models
+            - Works completely offline
+            - No account required
             
             ### System Requirements
+            
+            **Windows:**
+            - Windows 10 or later
+            - 4GB RAM minimum
+            - 200MB disk space
+            
+            **Android:**
             - Android 7.0 (API 24) or later
             - 2GB RAM minimum
             - 100MB storage space
             
             ### Installation
+            
+            **Windows:**
+            1. Download the installer or portable version
+            2. Run the installer (or extract the portable version)
+            3. Launch CAMBRIC LABS
+            
+            **Android:**
             1. Download the APK to your Android device
             2. Enable "Install from unknown sources" in settings
             3. Open the APK file to install

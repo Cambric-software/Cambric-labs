@@ -1,6 +1,6 @@
 {
   "name": "cambric-labs",
-  "version": "0.1.0",
+  "version": "0.1.6",
   "description": "CAMBRIC LABS - Local Neural Network Laboratory",
   "main": "main.js",
   "author": "Cambric Software",
@@ -13,7 +13,7 @@
   "build": {
     "appId": "com.cambric.labs",
     "productName": "CAMBRIC LABS",
-    "copyright": "Copyright © 2024 Cambric Software",
+    "copyright": "Copyright © 2024-2026 Cambric Software",
     "directories": {
       "output": "release",
       "buildResources": "build"
