@@ -79,27 +79,11 @@ jobs:
         run: |
           cd frontend/android
           # Create gradle.properties to resolve Kotlin version conflicts
-          cat > gradle.properties << 'PROPS'
-android.useAndroidX=true
-android.enableJetifier=true
-kotlin.code.style=official
-org.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError
-PROPS
-          
+          printf 'android.useAndroidX=true\nandroid.enableJetifier=true\nkotlin.code.style=official\norg.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError\n' > gradle.properties
           # Add resolution strategy to app/build.gradle to fix Kotlin duplicate classes
-          if [ -f app/build.gradle ]; then
-            if ! grep -q "resolutionStrategy" app/build.gradle; then
-              echo '
-configurations.all {
-    resolutionStrategy {
-        force "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
-        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"
-        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
-    }
-}' >> app/build.gradle
-            fi
+          if [ -f app/build.gradle ] && ! grep -q "resolutionStrategy" app/build.gradle; then
+            printf '\nconfigurations.all {\n    resolutionStrategy {\n        force "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"\n        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"\n        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"\n    }\n}\n' >> app/build.gradle
           fi
-          
           ./gradlew assembleRelease
         env:
           VERSION_NAME: ${{ github.event.inputs.version || github.ref_name }}
