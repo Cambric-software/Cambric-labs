@@ -3,6 +3,13 @@ Network Implementation for CAMBRIC LABS
 
 A network is a collection of layers connected sequentially.
 Data flows from input layer through hidden layers to output layer.
+
+Architecture:
+    Network.forward() -> Layer.forward() -> Neuron.forward()
+    Network.backward() -> Layer.backward() -> Neuron.backward() (computes gradients)
+    Network.update() -> Layer.update() -> Neuron.update() (applies gradients)
+
+This separation allows inspection of gradients before they're applied.
 """
 
 import numpy as np
@@ -17,10 +24,10 @@ class Network:
     The network takes an input vector, passes it through each layer
     in sequence, and produces an output vector.
     
-    Attributes:
-        name: Network identifier
-        layers: List of layers in order
-        loss_function: Loss function for training
+    Design:
+    - backward() computes gradients but does NOT update weights
+    - update() applies gradients to all layers
+    - compute_gradients() allows inspection without modification
     """
     
     def __init__(
@@ -47,6 +54,7 @@ class Network:
         # Current state
         self._last_inputs: Optional[np.ndarray] = None
         self._layer_outputs: List[np.ndarray] = []
+        self._current_prediction: Optional[List[float]] = None
     
     @property
     def input_dim(self) -> int:
@@ -108,6 +116,7 @@ class Network:
             current_input = result['outputs']
         
         self._layer_outputs = [np.array(out) for out in layer_outputs]
+        self._current_prediction = current_input
         
         return {
             'output': current_input,
@@ -118,20 +127,18 @@ class Network:
             'total_parameters': self.total_parameters
         }
     
-    def backward(
-        self,
-        loss_gradient: List[float],
-        learning_rate: float = 0.01
-    ) -> Dict[str, Any]:
+    def backward(self, loss_gradient: List[float]) -> Dict[str, Any]:
         """
-        Compute backward pass and update all layers.
+        Compute gradients for all layers.
+        
+        IMPORTANT: This only computes gradients, does NOT update weights.
+        Call update() to apply the gradients.
         
         Args:
-            loss_gradient: Gradient of loss with respect to output
-            learning_rate: Learning rate
+            loss_gradient: Gradient of loss with respect to output (dL/dy)
             
         Returns:
-            Dictionary with gradients and updates per layer
+            Dictionary with gradients for inspection
         """
         if not self._layer_outputs:
             raise RuntimeError("Must call forward() before backward()")
@@ -139,38 +146,104 @@ class Network:
         # Start with output gradients
         current_gradients = np.array(loss_gradient, dtype=np.float64)
         layer_gradients = []
-        layer_updates = []
         
         # Propagate backwards through layers
         for i in reversed(range(len(self.layers))):
             layer = self.layers[i]
-            result = layer.backward(current_gradients.tolist(), learning_rate)
+            result = layer.backward(current_gradients.tolist())
             
             layer_gradients.append({
                 'layer_index': i,
                 'layer_name': layer.name,
                 'input_gradients': result['input_gradients'],
-                'weight_updates': result['weight_updates'],
-                'bias_updates': result['bias_updates']
-            })
-            
-            layer_updates.append({
-                'layer_index': i,
-                'layer_name': layer.name,
-                'new_weights': [u['new_weights'] for u in result['weight_updates']],
-                'new_biases': [u['new_bias'] for u in result['bias_updates']]
+                'neuron_gradients': result['neuron_gradients']
             })
             
             # Pass gradients to previous layer
             current_gradients = np.array(result['input_gradients'])
         
         layer_gradients.reverse()
-        layer_updates.reverse()
         
         return {
             'layer_gradients': layer_gradients,
+            'parameter_count': self.total_parameters
+        }
+    
+    def compute_gradients(self, loss_gradient: List[float]) -> Dict[str, Any]:
+        """
+        Compute gradients for inspection (does not modify any parameters).
+        
+        This is useful for educational visualization where you want to
+        show gradients without actually updating the network.
+        
+        Args:
+            loss_gradient: Gradient of loss with respect to output
+            
+        Returns:
+            Dictionary with gradient information
+        """
+        return self.backward(loss_gradient)
+    
+    def update(
+        self, 
+        learning_rate: float,
+        clip_gradients: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """
+        Apply accumulated gradients to update all layers.
+        
+        Args:
+            learning_rate: Learning rate for gradient descent
+            clip_gradients: Optional gradient norm clipping
+            
+        Returns:
+            Dictionary with update information
+        """
+        layer_updates = []
+        
+        for i, layer in enumerate(self.layers):
+            result = layer.update(learning_rate, clip_gradients)
+            layer_updates.append({
+                'layer_index': i,
+                'layer_name': layer.name,
+                'weight_updates': result['weight_updates'],
+                'bias_updates': result['bias_updates'],
+                'learning_rate': result['learning_rate']
+            })
+        
+        return {
             'layer_updates': layer_updates,
-            'total_parameters_updated': self.total_parameters
+            'parameters_updated': self.total_parameters,
+            'learning_rate': learning_rate
+        }
+    
+    def train_step(
+        self,
+        loss_gradient: List[float],
+        learning_rate: float,
+        clip_gradients: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """
+        Perform one complete training step (backward + update).
+        
+        This is a convenience method that combines backward() and update().
+        Use backward() + update() separately if you need to inspect
+        gradients before applying them.
+        
+        Args:
+            loss_gradient: Gradient of loss with respect to output
+            learning_rate: Learning rate
+            clip_gradients: Optional gradient clipping
+            
+        Returns:
+            Dictionary with gradient and update information
+        """
+        gradient_result = self.backward(loss_gradient)
+        update_result = self.update(learning_rate, clip_gradients)
+        
+        return {
+            'gradients': gradient_result,
+            'updates': update_result
         }
     
     def get_state(self) -> Dict[str, Any]:
@@ -207,11 +280,22 @@ class Network:
         for neuron in self.layers[layer_index].neurons:
             neuron.activation = activation
     
-    def reset(self):
-        """Reset all layer states."""
+    def reset_cache(self):
+        """Reset temporary cache (preserves learned parameters)."""
         for layer in self.layers:
-            layer.reset()
+            layer.reset_cache()
         self._layer_outputs = []
+        self._current_prediction = None
+    
+    def reset_parameters(self, seed: Optional[int] = None):
+        """Reset all parameters to new random values."""
+        for i, layer in enumerate(self.layers):
+            layer_seed = seed + i if seed is not None else None
+            layer.reset_parameters(layer_seed)
+    
+    def reset(self):
+        """Reset internal state (alias for reset_cache)."""
+        self.reset_cache()
     
     def to_dict(self) -> Dict[str, Any]:
         """Serialize network to dictionary."""
@@ -276,13 +360,12 @@ def create_simple_network(
         network.add_layer(layer)
         prev_dim = hidden_dim
     
-    # Output layer (typically identity or softmax)
-    output_activation = 'softmax' if output_dim > 1 else 'identity'
+    # Output layer (identity for regression)
     output_layer = Layer(
         name="output",
         input_dim=prev_dim,
         output_dim=output_dim,
-        activation=output_activation,
+        activation='identity',
         seed=seed + len(hidden_dims) if seed else None
     )
     network.add_layer(output_layer)

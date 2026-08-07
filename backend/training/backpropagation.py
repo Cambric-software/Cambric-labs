@@ -4,6 +4,11 @@ Backpropagation Implementation for CAMBRIC LABS
 Backpropagation is the algorithm used to train neural networks.
 It computes gradients of the loss with respect to each weight
 by propagating the error backwards through the network.
+
+Key Design:
+- backward() computes gradients only
+- update() applies gradients
+- This separation allows gradient inspection before updating
 """
 
 import numpy as np
@@ -18,7 +23,8 @@ class Backpropagation:
     
     Backpropagation consists of two passes:
     1. Forward pass: Compute predictions and loss
-    2. Backward pass: Compute gradients and update weights
+    2. Backward pass: Compute gradients
+    3. Update: Apply gradients to parameters
     
     The algorithm uses the chain rule of calculus to efficiently
     compute how much each parameter contributed to the error.
@@ -39,15 +45,17 @@ class Backpropagation:
         self,
         inputs: List[float],
         targets: List[float],
-        learning_rate: float = 0.01
+        learning_rate: float = 0.01,
+        clip_gradients: Optional[float] = None
     ) -> Dict[str, Any]:
         """
-        Perform one training step (forward + backward pass).
+        Perform one training step (forward + backward + update).
         
         Args:
             inputs: Input values
             targets: Target (expected) output values
             learning_rate: Step size for gradient descent
+            clip_gradients: Optional gradient norm clipping
             
         Returns:
             Dictionary containing:
@@ -68,8 +76,11 @@ class Backpropagation:
             self.loss_function, prediction, targets
         )
         
-        # Backward pass
-        backward_result = self.network.backward(loss_gradient, learning_rate)
+        # Backward pass (computes gradients only)
+        gradient_result = self.network.backward(loss_gradient)
+        
+        # Update (applies gradients)
+        update_result = self.network.update(learning_rate, clip_gradients)
         
         return {
             'cycle': 1,
@@ -78,9 +89,9 @@ class Backpropagation:
             'prediction': prediction,
             'loss': loss,
             'loss_gradient': loss_gradient,
-            'layer_gradients': backward_result['layer_gradients'],
-            'layer_updates': backward_result['layer_updates'],
-            'total_parameters_updated': backward_result['total_parameters_updated'],
+            'layer_gradients': gradient_result['layer_gradients'],
+            'layer_updates': update_result['layer_updates'],
+            'total_parameters_updated': update_result['parameters_updated'],
             'learning_rate': learning_rate,
             'architecture': self.network.get_architecture()
         }
@@ -92,6 +103,9 @@ class Backpropagation:
     ) -> Dict[str, Any]:
         """
         Compute gradients without updating weights (for analysis).
+        
+        This allows CAMBRIC Labs to inspect gradients before
+        they're applied to the network.
         
         Args:
             inputs: Input values
@@ -112,58 +126,16 @@ class Backpropagation:
             self.loss_function, prediction, targets
         )
         
-        # Backward pass (without updating)
-        # We need to temporarily store gradients
-        self.network.reset()
-        self.network.forward(inputs)
-        
-        # Manual gradient computation without updates
-        layer_gradients = []
-        current_gradient = np.array(loss_gradient, dtype=np.float64)
-        
-        for i in reversed(range(len(self.network.layers))):
-            layer = self.network.layers[i]
-            
-            # Compute gradients for this layer
-            if layer._last_inputs is not None:
-                # Simple gradient computation for analysis
-                if layer.activation == 'relu':
-                    activation_derivative = (layer._last_inputs > 0).astype(float)
-                elif layer.activation == 'sigmoid':
-                    outputs = layer._last_outputs
-                    activation_derivative = outputs * (1 - outputs)
-                elif layer.activation == 'tanh':
-                    outputs = layer._last_outputs
-                    activation_derivative = 1 - outputs**2
-                else:
-                    activation_derivative = np.ones_like(layer._last_outputs)
-                
-                weight_gradients = np.outer(activation_derivative * current_gradient,
-                                           layer._last_inputs)
-                bias_gradients = activation_derivative * current_gradient
-                
-                # Input gradients for previous layer
-                current_gradient = np.dot(
-                    layer.weights_matrix.T,
-                    activation_derivative * current_gradient
-                )
-                
-                layer_gradients.append({
-                    'layer_index': i,
-                    'layer_name': layer.name,
-                    'weight_gradients': weight_gradients.tolist(),
-                    'bias_gradients': bias_gradients.tolist(),
-                    'input_gradients': current_gradient.tolist()
-                })
-        
-        layer_gradients.reverse()
+        # Backward pass (computes gradients only, no updates)
+        gradient_result = self.network.compute_gradients(loss_gradient)
         
         return {
             'inputs': inputs,
             'targets': targets,
             'prediction': prediction,
             'loss': loss,
-            'layer_gradients': layer_gradients
+            'loss_gradient': loss_gradient,
+            'layer_gradients': gradient_result['layer_gradients']
         }
     
     def explain_gradient_flow(

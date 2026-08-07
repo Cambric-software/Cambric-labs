@@ -123,19 +123,48 @@ class TestNeuronForward:
 class TestNeuronBackward:
     """Tests for neuron backward pass."""
     
-    def test_backward_updates_weights(self):
-        """Test that backward pass updates weights."""
+    def test_backward_does_not_update_weights(self):
+        """Test that backward pass does NOT update weights (only computes gradients)."""
         neuron = Neuron(input_count=2, weights=[1.0, 1.0], bias=0.0, activation='identity')
         
         # Forward pass
         neuron.forward([1.0, 2.0])
         
-        # Backward pass with learning rate 0.1
-        result = neuron.backward(output_gradient=1.0, learning_rate=0.1)
+        # Backward pass (computes gradients only)
+        result = neuron.backward(output_gradient=1.0)
         
-        # Weights should have changed
+        # Weights should NOT have changed yet
+        assert neuron.weights[0] == 1.0
+        assert neuron.bias == 0.0
+        
+        # Now apply update
+        update_result = neuron.update(result, learning_rate=0.1)
+        
+        # Now weights should have changed
         assert neuron.weights[0] != 1.0
         assert neuron.bias != 0.0
+    
+    def test_update_changes_weights(self):
+        """Test that update actually changes weights."""
+        neuron = Neuron(input_count=2, weights=[1.0, 1.0], bias=0.0, activation='identity')
+        
+        # Forward pass
+        neuron.forward([1.0, 2.0])
+        
+        # Get gradients
+        gradients = neuron.backward(output_gradient=1.0)
+        
+        # Apply update
+        result = neuron.update(gradients, learning_rate=0.1)
+        
+        # Check update result
+        assert 'weight_changes' in result
+        assert 'bias_change' in result
+        assert 'new_weights' in result
+        assert 'new_bias' in result
+        
+        # Weights should have moved
+        assert result['new_weights'][0] != 1.0
     
     def test_backward_without_forward_raises(self):
         """Test that backward without forward raises error."""
@@ -144,37 +173,39 @@ class TestNeuronBackward:
         with pytest.raises(RuntimeError):
             neuron.backward(output_gradient=1.0)
     
-    def test_backward_returns_gradients(self):
-        """Test that backward returns gradient information."""
+    def test_backward_returns_gradient_result(self):
+        """Test that backward returns GradientResult."""
         neuron = Neuron(input_count=2, weights=[1.0, 1.0], bias=0.0, activation='identity')
         
         neuron.forward([1.0, 2.0])
-        result = neuron.backward(output_gradient=1.0, learning_rate=0.1)
+        result = neuron.backward(output_gradient=1.0)
         
-        assert 'input_gradients' in result
-        assert 'weight_gradients' in result
-        assert 'bias_gradient' in result
-        assert 'weight_updates' in result
-        assert 'bias_update' in result
-        assert 'new_weights' in result
-        assert 'new_bias' in result
+        # Check GradientResult attributes
+        assert hasattr(result, 'input_gradients')
+        assert hasattr(result, 'weight_gradients')
+        assert hasattr(result, 'bias_gradient')
+        assert hasattr(result, 'activation_gradient')
+        
+        # Can also get via get_gradients()
+        cached = neuron.get_gradients()
+        assert cached is not None
     
     def test_backward_gradient_values(self):
         """Test that gradients are computed correctly for identity activation."""
         neuron = Neuron(input_count=2, weights=[1.0, 1.0], bias=0.0, activation='identity')
         
         neuron.forward([1.0, 2.0])  # output = 3
-        result = neuron.backward(output_gradient=1.0, learning_rate=0.1)
+        result = neuron.backward(output_gradient=1.0)
         
         # For identity activation, derivative is 1
         # Input gradients = weights * gradient = [1, 1] * 1 = [1, 1]
-        assert result['input_gradients'] == pytest.approx([1.0, 1.0])
+        assert np.allclose(result.input_gradients, [1.0, 1.0])
         
         # Weight gradients = inputs * gradient = [1, 2] * 1 = [1, 2]
-        assert result['weight_gradients'] == pytest.approx([1.0, 2.0])
+        assert np.allclose(result.weight_gradients, [1.0, 2.0])
         
         # Bias gradient = gradient = 1
-        assert result['bias_gradient'] == pytest.approx(1.0)
+        assert np.isclose(result.bias_gradient, 1.0)
 
 
 class TestNeuronState:
