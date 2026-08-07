@@ -216,6 +216,17 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
+      - name: Delete existing release if exists
+        run: |
+          if gh release view ${{ github.ref_name }} > /dev/null 2>&1; then
+            echo "Release exists, deleting..."
+            gh release delete ${{ github.ref_name }} --yes
+          else
+            echo "No existing release found"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
