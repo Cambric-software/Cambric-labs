@@ -1,120 +1,106 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { 
   Zap, Play, RotateCcw, Plus, Minus, Trash2, Save, 
-  ChevronDown, ChevronUp, TrendingDown, Activity, 
-  Layers, Download
+  TrendingDown, Layers, Download, Home, Database
 } from 'lucide-react'
-import { NeuralNetwork, createSingleNeuron, createNetwork } from '../utils/neural'
-import { experimentStorage, Experiment } from '../utils/storage'
+import { NeuralNetwork, createNetwork } from '../utils/neural'
+import { experimentStorage } from '../utils/storage'
 import styles from './LabPage.module.css'
 
-interface TrainingStep {
-  cycle: number
-  loss: number
-  prediction: number
+interface DatasetExample {
+  id: string
+  inputs: number[]
   target: number
-  weightDeltas: number[]
-  biasDelta: number
 }
 
 export default function LabPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   
-  // Network state
   const [network, setNetwork] = useState<NeuralNetwork | null>(null)
-  const [experiment, setExperiment] = useState<Experiment | null>(null)
+  const [experiment, setExperiment] = useState<any>(null)
   
-  // Inputs and outputs
-  const [inputs, setInputs] = useState<number[]>([0.5, 0.3, 0.8])
-  const [target, setTarget] = useState<number>(0.53)
+  const [inputs, setInputs] = useState<number[]>([0.5, 0.5])
+  const [target, setTarget] = useState<number>(0.7)
   const [output, setOutput] = useState<number | null>(null)
   
-  // Training state
   const [cycleCount, setCycleCount] = useState(0)
   const [lastLoss, setLastLoss] = useState<number | null>(null)
   const [isTraining, setIsTraining] = useState(false)
-  const [trainingHistory, setTrainingHistory] = useState<TrainingStep[]>([])
   const [learningRate, setLearningRate] = useState(0.1)
+  const [epochs, setEpochs] = useState(100)
+  const [currentEpoch, setCurrentEpoch] = useState(0)
   
-  // Network architecture
+  const [dataset, setDataset] = useState<DatasetExample[]>([
+    { id: '1', inputs: [0.2, 0.4], target: 0.3 },
+    { id: '2', inputs: [0.6, 0.8], target: 0.7 },
+    { id: '3', inputs: [0.1, 0.9], target: 0.5 },
+  ])
+  
   const [layers, setLayers] = useState<{ neuronCount: number; activation: string }[]>([
     { neuronCount: 4, activation: 'relu' },
     { neuronCount: 2, activation: 'relu' }
   ])
-  const [inputCount, setInputCount] = useState(3)
+  const [inputCount, setInputCount] = useState(2)
   
-  // UI state
-  const [showNetworkConfig, setShowNetworkConfig] = useState(false)
-  const [showDetails, setShowDetails] = useState(true)
-  const [explainMode, setExplainMode] = useState<'simple' | 'technical'>('simple')
+  const [optimizer, setOptimizer] = useState<'sgd' | 'momentum' | 'adam' | 'rmsprop'>('sgd')
+  const [activeTab, setActiveTab] = useState<'train' | 'data' | 'network'>('train')
   
   const trainingRef = useRef<number | null>(null)
 
-  // Load or create experiment
+  const createNewNetwork = () => {
+    const net = createNetwork(inputCount, layers, 1, optimizer, learningRate)
+    setNetwork(net)
+    setOutput(null)
+    setCycleCount(0)
+    setLastLoss(null)
+  }
+
   useEffect(() => {
     if (id) {
       const exp = experimentStorage.get(id)
       if (exp) {
         setExperiment(exp)
-        setCycleCount(exp.currentCycle)
-        setLearningRate(exp.learningRate)
-        setInputCount(exp.inputDim)
-        setLayers(exp.layers.map(l => ({
+        setCycleCount(exp.currentCycle || 0)
+        setLearningRate(exp.learningRate || 0.1)
+        setInputCount(exp.inputDim || 2)
+        setLayers(exp.layers?.map((l: any) => ({
           neuronCount: l.neuronCount,
           activation: l.activation
-        })))
+        })) || [{ neuronCount: 4, activation: 'relu' }])
         
-        // Recreate network from saved state
         const net = createNetwork(
-          exp.inputDim,
-          exp.layers.map(l => ({ neuronCount: l.neuronCount, activation: l.activation })),
-          exp.outputDim
+          exp.inputDim || 2,
+          exp.layers?.map((l: any) => ({ neuronCount: l.neuronCount, activation: l.activation })) || [{ neuronCount: 4, activation: 'relu' }],
+          1,
+          optimizer,
+          learningRate
         )
-        if (exp.currentWeights.length > 0) {
-          net.setWeights(exp.currentWeights, exp.currentBiases)
+        if (exp.currentWeights?.length > 0) {
+          net.setWeights(exp.currentWeights, exp.currentBiases || [])
         }
         setNetwork(net)
+      } else {
+        createNewNetwork()
       }
     } else {
-      // Create new single neuron
-      const net = createSingleNeuron(3, 'relu')
-      setNetwork(net)
+      createNewNetwork()
     }
   }, [id])
 
-  // Save experiment
-  const saveExperiment = useCallback(() => {
-    if (!network || !experiment) return
-    
-    const state = network.getState()
-    experimentStorage.updateWeights(experiment.id, state.weights, state.biases)
-    experimentStorage.addTrainingHistory(
-      experiment.id,
-      cycleCount,
-      lastLoss || 0,
-      state.weights,
-      state.biases
-    )
-    
-    // Show save indicator
-    const saveEl = document.querySelector('[data-save-indicator]')
-    if (saveEl) {
-      saveEl.classList.add(styles.saved)
-      setTimeout(() => saveEl.classList.remove(styles.saved), 1000)
+  useEffect(() => {
+    if (network) {
+      network.updateConfig({ optimizer, learningRate })
     }
-  }, [network, experiment, cycleCount, lastLoss])
+  }, [optimizer, learningRate, network])
 
-  // Run forward pass
   const runForward = useCallback(() => {
     if (!network) return
-    
     const result = network.forward(inputs)
     setOutput(result.outputs[0])
   }, [network, inputs])
 
-  // Single training cycle
   const trainCycle = useCallback(() => {
     if (!network) return
     
@@ -123,46 +109,60 @@ export default function LabPage() {
     setOutput(result.predictions[0])
     setLastLoss(result.loss)
     setCycleCount(c => c + 1)
-    
-    // Calculate weight deltas for display
-    const state = network.getState()
-    const weightDeltas = result.gradients.weightGradients.flat()
-    
-    setTrainingHistory(prev => [...prev.slice(-99), {
-      cycle: cycleCount + 1,
-      loss: result.loss,
-      prediction: result.predictions[0],
-      target,
-      weightDeltas,
-      biasDelta: result.gradients.biasGradients[0]
-    }])
-    
-    // Auto-save
-    if (experiment) {
-      experimentStorage.addTrainingHistory(
-        experiment.id,
-        cycleCount + 1,
-        result.loss,
-        state.weights,
-        state.biases
-      )
-    }
-  }, [network, inputs, target, learningRate, experiment, cycleCount])
+  }, [network, inputs, target])
 
-  // Auto-train
   const startAutoTrain = useCallback(() => {
     if (!network || isTraining) return
     setIsTraining(true)
     
     const runCycle = () => {
-      if (!isTraining) return
-      
       trainCycle()
-      trainingRef.current = window.setTimeout(runCycle, 50)
+      trainingRef.current = window.setTimeout(runCycle, 10)
     }
     
     runCycle()
   }, [network, isTraining, trainCycle])
+
+  const trainOnDataset = useCallback(() => {
+    if (!network || isTraining) return
+    setIsTraining(true)
+    setCurrentEpoch(0)
+    
+    let epoch = 0
+    const trainEpoch = () => {
+      if (epoch >= epochs) {
+        setIsTraining(false)
+        return
+      }
+      
+      const shuffled = [...dataset].sort(() => Math.random() - 0.5)
+      let exampleIndex = 0
+      
+      const trainExample = () => {
+        if (exampleIndex >= shuffled.length) {
+          epoch++
+          setCurrentEpoch(epoch)
+          trainingRef.current = window.setTimeout(trainEpoch, 20)
+          return
+        }
+        
+        const example = shuffled[exampleIndex]
+        network.trainCycle(example.inputs, [example.target])
+        exampleIndex++
+        
+        const result = network.forward(example.inputs)
+        setOutput(result.outputs[0])
+        setInputs(example.inputs)
+        setTarget(example.target)
+        
+        trainingRef.current = window.setTimeout(trainExample, 10)
+      }
+      
+      trainExample()
+    }
+    
+    trainEpoch()
+  }, [network, isTraining, dataset, epochs])
 
   const stopAutoTrain = useCallback(() => {
     setIsTraining(false)
@@ -172,80 +172,69 @@ export default function LabPage() {
     }
   }, [])
 
-  // Reset network
   const resetNetwork = useCallback(() => {
     if (!network) return
     network.reset()
     setOutput(null)
     setCycleCount(0)
     setLastLoss(null)
-    setTrainingHistory([])
-    setInputs([0.5, 0.3, 0.8])
-    setTarget(0.53)
+    setCurrentEpoch(0)
   }, [network])
 
-  // Add layer
   const addLayer = () => {
     const newLayers = [...layers, { neuronCount: 4, activation: 'relu' }]
     setLayers(newLayers)
-    rebuildNetwork(inputCount, newLayers)
+    const net = createNetwork(inputCount, newLayers, 1, optimizer, learningRate)
+    setNetwork(net)
   }
 
-  // Remove layer
   const removeLayer = (index: number) => {
     if (layers.length <= 1) return
     const newLayers = layers.filter((_, i) => i !== index)
     setLayers(newLayers)
-    rebuildNetwork(inputCount, newLayers)
+    const net = createNetwork(inputCount, newLayers, 1, optimizer, learningRate)
+    setNetwork(net)
   }
-
-  // Update layer
+  
   const updateLayer = (index: number, updates: Partial<{ neuronCount: number; activation: string }>) => {
     const newLayers = layers.map((l, i) => i === index ? { ...l, ...updates } : l)
     setLayers(newLayers)
-    rebuildNetwork(inputCount, newLayers)
+    const net = createNetwork(inputCount, newLayers, 1, optimizer, learningRate)
+    setNetwork(net)
   }
 
-  // Add input
   const addInput = () => {
-    if (inputCount >= 20) return
+    if (inputCount >= 10) return
     const newCount = inputCount + 1
     setInputCount(newCount)
     setInputs([...inputs, 0.5])
-    rebuildNetwork(newCount, layers)
+    const newLayers = [{ neuronCount: newCount, activation: layers[0]?.activation || 'relu' }, ...layers.slice(1)]
+    const net = createNetwork(newCount, newLayers, 1, optimizer, learningRate)
+    setNetwork(net)
   }
 
-  // Remove input
   const removeInput = () => {
     if (inputCount <= 1) return
     const newCount = inputCount - 1
     setInputCount(newCount)
     setInputs(inputs.slice(0, -1))
-    rebuildNetwork(newCount, layers)
-  }
-
-  // Rebuild network with new architecture
-  const rebuildNetwork = (inCount: number, layerConfig: { neuronCount: number; activation: string }[]) => {
-    const net = createNetwork(
-      inCount,
-      layerConfig.map(l => ({ neuronCount: l.neuronCount, activation: l.activation })),
-      1
-    )
+    const newLayers = [{ neuronCount: newCount, activation: layers[0]?.activation || 'relu' }, ...layers.slice(1)]
+    const net = createNetwork(newCount, newLayers, 1, optimizer, learningRate)
     setNetwork(net)
-    setOutput(null)
-    setCycleCount(0)
-    setLastLoss(null)
-    setTrainingHistory([])
   }
 
-  // Create new experiment
   const createNewExperiment = () => {
     const exp = experimentStorage.create('New Experiment')
-    setExperiment(exp)
     navigate(`/lab/${exp.id}`)
+    window.location.reload()
   }
 
-  // Export experiment
+  const saveExperiment = () => {
+    if (!network || !experiment) return
+    const state = network.getState()
+    experimentStorage.updateWeights(experiment.id, state.weights, state.biases)
+  }
+
   const exportExperiment = () => {
     if (!experiment) return
     const data = experimentStorage.exportExperiment(experiment.id)
@@ -254,381 +243,354 @@ export default function LabPage() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${experiment.name.replace(/\s+/g, '-').toLowerCase()}.json`
+      a.download = `experiment.json`
       a.click()
       URL.revokeObjectURL(url)
     }
   }
 
-  // Get current network state
-  const networkState = network?.getState()
+  const addDatasetExample = () => {
+    const newExample: DatasetExample = {
+      id: Date.now().toString(),
+      inputs: Array(inputCount).fill(0.5),
+      target: 0.5
+    }
+    setDataset([...dataset, newExample])
+  }
+
+  const removeDatasetExample = (id: string) => {
+    setDataset(dataset.filter(d => d.id !== id))
+  }
+
+  const updateDatasetExample = (id: string, updates: Partial<DatasetExample>) => {
+    setDataset(dataset.map(d => d.id === id ? { ...d, ...updates } : d))
+  }
+
+  const stats = network?.getStats()
 
   if (!network) {
-    return <div className={styles.loading}>Initializing network...</div>
+    return <div className={styles.loading}>Loading...</div>
   }
 
   return (
     <div className={styles.lab}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <h1>CAMBRIC LABS</h1>
-          <span className={styles.experimentName}>
-            {experiment?.name || 'Single Neuron'}
-          </span>
+          <Link to="/" className={styles.homeLink}>
+            <Home size={18} />
+          </Link>
+          <div>
+            <h1>Lab</h1>
+            <span className={styles.experimentName}>
+              {experiment?.name || 'Untitled'}
+            </span>
+          </div>
         </div>
         <div className={styles.headerRight}>
-          <button 
-            className={styles.iconBtn}
-            onClick={createNewExperiment}
-            title="New Experiment"
-          >
+          <button className={styles.actionBtn} onClick={createNewExperiment}>
             <Plus size={18} />
+            <span>New</span>
           </button>
-          <button 
-            className={styles.iconBtn}
-            onClick={saveExperiment}
-            data-save-indicator
-            disabled={!experiment}
-            title="Save"
-          >
+          <button className={styles.actionBtn} onClick={saveExperiment} disabled={!experiment}>
             <Save size={18} />
+            <span>Save</span>
           </button>
-          <button 
-            className={styles.iconBtn}
-            onClick={exportExperiment}
-            disabled={!experiment}
-            title="Export"
-          >
+          <button className={styles.actionBtn} onClick={exportExperiment} disabled={!experiment}>
             <Download size={18} />
           </button>
         </div>
       </header>
 
-      <div className={styles.mainContent}>
-        {/* Left Panel - Network Visualization */}
-        <section className={styles.networkPanel}>
-          <div className={styles.panelHeader}>
-            <h2>Network Architecture</h2>
-            <button 
-              className={styles.collapseBtn}
-              onClick={() => setShowNetworkConfig(!showNetworkConfig)}
-            >
-              {showNetworkConfig ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </button>
-          </div>
-          
-          {showNetworkConfig && (
-            <div className={styles.networkConfig}>
-              <div className={styles.configSection}>
-                <div className={styles.configRow}>
-                  <label>Input Neurons:</label>
-                  <div className={styles.inputGroup}>
-                    <button onClick={removeInput} disabled={inputCount <= 1}>
-                      <Minus size={14} />
+      <nav className={styles.tabs}>
+        <button className={`${styles.tab} ${activeTab === 'train' ? styles.active : ''}`} onClick={() => setActiveTab('train')}>
+          <Zap size={18} /> Train
+        </button>
+        <button className={`${styles.tab} ${activeTab === 'data' ? styles.active : ''}`} onClick={() => setActiveTab('data')}>
+          <Database size={18} /> Data
+        </button>
+        <button className={`${styles.tab} ${activeTab === 'network' ? styles.active : ''}`} onClick={() => setActiveTab('network')}>
+          <Layers size={18} /> Network
+        </button>
+      </nav>
+
+      <main className={styles.main}>
+        {activeTab === 'train' && (
+          <div className={styles.trainSection}>
+            <section className={styles.card}>
+              <h2>Input Values</h2>
+              <div className={styles.inputGrid}>
+                {inputs.map((val, i) => (
+                  <div key={i} className={styles.inputItem}>
+                    <label>x{i + 1}</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="1"
+                      value={val}
+                      onChange={(e) => {
+                        const newInputs = [...inputs]
+                        newInputs[i] = Math.max(0, Math.min(1, parseFloat(e.target.value) || 0))
+                        setInputs(newInputs)
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className={styles.targetInput}>
+                <label>Target Output</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="1"
+                  value={target}
+                  onChange={(e) => setTarget(Math.max(0, Math.min(1, parseFloat(e.target.value) || 0)))}
+                />
+              </div>
+            </section>
+
+            <section className={styles.card}>
+              <h2>Results</h2>
+              <div className={styles.resultsGrid}>
+                <div className={styles.resultItem}>
+                  <span className={styles.resultLabel}>Prediction</span>
+                  <span className={styles.resultValue}>
+                    {output !== null ? output.toFixed(4) : '—'}
+                  </span>
+                </div>
+                <div className={styles.resultItem}>
+                  <span className={styles.resultLabel}>Loss</span>
+                  <span className={styles.resultValue}>
+                    {lastLoss !== null ? lastLoss.toFixed(6) : '—'}
+                  </span>
+                </div>
+                <div className={styles.resultItem}>
+                  <span className={styles.resultLabel}>Cycles</span>
+                  <span className={styles.resultValue}>{cycleCount}</span>
+                </div>
+                {currentEpoch > 0 && (
+                  <div className={styles.resultItem}>
+                    <span className={styles.resultLabel}>Epoch</span>
+                    <span className={styles.resultValue}>{currentEpoch}/{epochs}</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className={styles.card}>
+              <h2>Training Controls</h2>
+              
+              <div className={styles.settings}>
+                <div className={styles.settingItem}>
+                  <label>Learning Rate</label>
+                  <input
+                    type="range"
+                    min="0.001"
+                    max="0.5"
+                    step="0.01"
+                    value={learningRate}
+                    onChange={(e) => setLearningRate(parseFloat(e.target.value))}
+                  />
+                  <span>{learningRate.toFixed(3)}</span>
+                </div>
+                
+                <div className={styles.settingItem}>
+                  <label>Optimizer</label>
+                  <select value={optimizer} onChange={(e) => setOptimizer(e.target.value as any)}>
+                    <option value="sgd">SGD</option>
+                    <option value="momentum">Momentum</option>
+                    <option value="adam">Adam</option>
+                    <option value="rmsprop">RMSprop</option>
+                  </select>
+                </div>
+                
+                <div className={styles.settingItem}>
+                  <label>Epochs</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={epochs}
+                    onChange={(e) => setEpochs(parseInt(e.target.value) || 100)}
+                  />
+                </div>
+              </div>
+              
+              <div className={styles.controlButtons}>
+                <button onClick={runForward} className={styles.btnSecondary}>
+                  <Play size={18} /> Forward
+                </button>
+                
+                <button onClick={trainCycle} className={styles.btnSecondary}>
+                  <Zap size={18} /> Cycle
+                </button>
+                
+                {isTraining ? (
+                  <button onClick={stopAutoTrain} className={styles.btnDanger}>
+                    <TrendingDown size={18} /> Stop
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={startAutoTrain} className={styles.btnPrimary}>
+                      <Zap size={18} /> Train
                     </button>
-                    <span>{inputCount}</span>
-                    <button onClick={addInput} disabled={inputCount >= 20}>
+                    <button onClick={trainOnDataset} className={styles.btnPrimary}>
+                      <Database size={18} /> Train All
+                    </button>
+                  </>
+                )}
+                
+                <button onClick={resetNetwork} className={styles.btnGhost}>
+                  <RotateCcw size={18} />
+                </button>
+              </div>
+            </section>
+
+            <section className={styles.card}>
+              <h2>Network Info</h2>
+              <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <span>Inputs</span>
+                  <span>{inputCount}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span>Layers</span>
+                  <span>{layers.length}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span>Parameters</span>
+                  <span>{stats?.totalParameters || '?'}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <span>Weight Range</span>
+                  <span>
+                    {stats ? `${stats.weightMin.toFixed(2)} to ${stats.weightMax.toFixed(2)}` : '—'}
+                  </span>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'data' && (
+          <div className={styles.dataSection}>
+            <section className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2>Training Data</h2>
+                <button onClick={addDatasetExample} className={styles.btnSmall}>
+                  <Plus size={16} /> Add Example
+                </button>
+              </div>
+              
+              <p className={styles.hint}>
+                Add examples to train your network. Each example has input values and a target output.
+              </p>
+              
+              <div className={styles.datasetList}>
+                {dataset.map((example, idx) => (
+                  <div key={example.id} className={styles.datasetItem}>
+                    <div className={styles.datasetHeader}>
+                      <span>Example {idx + 1}</span>
+                      <button onClick={() => removeDatasetExample(example.id)} className={styles.btnIconDanger}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className={styles.datasetInputs}>
+                      {example.inputs.map((val, i) => (
+                        <input
+                          key={i}
+                          type="number"
+                          step="0.1"
+                          value={val}
+                          onChange={(e) => updateDatasetExample(example.id, {
+                            inputs: example.inputs.map((v, j) => j === i ? parseFloat(e.target.value) || 0 : v)
+                          })}
+                          placeholder={`x${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                    <div className={styles.datasetTarget}>
+                      <label>Target:</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={example.target}
+                        onChange={(e) => updateDatasetExample(example.id, {
+                          target: parseFloat(e.target.value) || 0
+                        })}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {dataset.length === 0 && (
+                <div className={styles.emptyState}>
+                  <Database size={48} />
+                  <p>No training examples yet</p>
+                  <button onClick={addDatasetExample} className={styles.btnPrimary}>
+                    <Plus size={18} /> Add First Example
+                  </button>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'network' && (
+          <div className={styles.networkSection}>
+            <section className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h2>Input Layer</h2>
+                <div className={styles.layerControls}>
+                  <button onClick={removeInput} disabled={inputCount <= 1}>
+                    <Minus size={14} />
+                  </button>
+                  <span>{inputCount}</span>
+                  <button onClick={addInput} disabled={inputCount >= 10}>
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {layers.map((layer, idx) => (
+              <section key={idx} className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <h2>Hidden Layer {idx + 1}</h2>
+                  <div className={styles.layerControls}>
+                    <button onClick={() => removeLayer(idx)} disabled={layers.length <= 1}>
+                      <Trash2 size={14} />
+                    </button>
+                    <span>{layer.neuronCount}</span>
+                    <button onClick={() => updateLayer(idx, { neuronCount: layer.neuronCount + 1 })}>
                       <Plus size={14} />
                     </button>
                   </div>
                 </div>
-              </div>
-              
-              <div className={styles.layersList}>
-                {layers.map((layer, idx) => (
-                  <div key={idx} className={styles.layerConfig}>
-                    <div className={styles.layerHeader}>
-                      <span>Layer {idx + 1}</span>
-                      {layers.length > 1 && (
-                        <button 
-                          className={styles.deleteBtn}
-                          onClick={() => removeLayer(idx)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
-                    <div className={styles.layerFields}>
-                      <div className={styles.field}>
-                        <label>Neurons:</label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="100"
-                          value={layer.neuronCount}
-                          onChange={(e) => updateLayer(idx, { neuronCount: parseInt(e.target.value) || 1 })}
-                        />
-                      </div>
-                      <div className={styles.field}>
-                        <label>Activation:</label>
-                        <select
-                          value={layer.activation}
-                          onChange={(e) => updateLayer(idx, { activation: e.target.value })}
-                        >
-                          <option value="relu">ReLU</option>
-                          <option value="sigmoid">Sigmoid</option>
-                          <option value="tanh">Tanh</option>
-                          <option value="identity">Identity</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <button className={styles.addLayerBtn} onClick={addLayer}>
-                <Plus size={16} /> Add Layer
-              </button>
-            </div>
-          )}
-          
-          <div className={styles.networkStats}>
-            <div className={styles.statItem}>
-              <Layers size={16} />
-              <span>Layers: {layers.length + 1}</span>
-            </div>
-            <div className={styles.statItem}>
-              <Activity size={16} />
-              <span>Parameters: {networkState?.weights.flat().length || 0}</span>
-            </div>
-          </div>
-          
-          {/* Network visualization */}
-          <div className={styles.networkViz}>
-            <div className={styles.layerViz}>
-              <div className={styles.layerLabel}>Input</div>
-              <div className={styles.neurons}>
-                {Array.from({ length: inputCount }).map((_, i) => (
-                  <div key={i} className={styles.neuronDot} title={`Input ${i + 1}: ${inputs[i]?.toFixed(3)}`} />
-                ))}
-              </div>
-            </div>
-            
-            {layers.map((layer, layerIdx) => (
-              <div key={layerIdx} className={styles.layerViz}>
-                <div className={styles.layerLabel}>L{layerIdx + 1}</div>
-                <div className={styles.neurons}>
-                  {Array.from({ length: Math.min(layer.neuronCount, 10) }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={`${styles.neuronDot} ${styles.hidden}`}
-                      title={`Neuron ${i + 1}`}
-                    />
-                  ))}
-                  {layer.neuronCount > 10 && (
-                    <div className={styles.moreNeurons}>+{layer.neuronCount - 10}</div>
-                  )}
+                <div className={styles.activationSelect}>
+                  <label>Activation:</label>
+                  <select 
+                    value={layer.activation}
+                    onChange={(e) => updateLayer(idx, { activation: e.target.value })}
+                  >
+                    <option value="relu">ReLU</option>
+                    <option value="sigmoid">Sigmoid</option>
+                    <option value="tanh">Tanh</option>
+                    <option value="leaky_relu">Leaky ReLU</option>
+                    <option value="identity">Identity</option>
+                  </select>
                 </div>
-              </div>
+              </section>
             ))}
-            
-            <div className={styles.layerViz}>
-              <div className={styles.layerLabel}>Output</div>
-              <div className={styles.neurons}>
-                <div className={styles.neuronDot} />
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Center Panel - Controls */}
-        <section className={styles.controlPanel}>
-          <h2>Inputs & Target</h2>
-          
-          <div className={styles.inputsSection}>
-            <div className={styles.inputList}>
-              {inputs.map((val, i) => (
-                <div key={i} className={styles.inputRow}>
-                  <label>x{i + 1}:</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={val}
-                    onChange={(e) => {
-                      const newInputs = [...inputs]
-                      newInputs[i] = parseFloat(e.target.value) || 0
-                      setInputs(newInputs)
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-            
-            <div className={styles.targetRow}>
-              <label>Target (y):</label>
-              <input
-                type="number"
-                step="0.1"
-                value={target}
-                onChange={(e) => setTarget(parseFloat(e.target.value) || 0)}
-              />
-            </div>
-          </div>
-          
-          <div className={styles.controlButtons}>
-            <button onClick={runForward} className={styles.forwardBtn}>
-              <Play size={16} /> Forward
-            </button>
-            
-            {isTraining ? (
-              <button onClick={stopAutoTrain} className={styles.stopBtn}>
-                <TrendingDown size={16} /> Stop
-              </button>
-            ) : (
-              <button onClick={startAutoTrain} className={styles.trainBtn}>
-                <Zap size={16} /> Train
-              </button>
-            )}
-            
-            <button onClick={trainCycle} className={styles.cycleBtn}>
-              <Zap size={16} /> Cycle
-            </button>
-            
-            <button onClick={resetNetwork} className={styles.resetBtn}>
-              <RotateCcw size={16} />
+            <button onClick={addLayer} className={styles.btnSecondary}>
+              <Plus size={18} /> Add Layer
             </button>
           </div>
-          
-          <div className={styles.learningRateControl}>
-            <label>Learning Rate:</label>
-            <input
-              type="range"
-              min="0.001"
-              max="1"
-              step="0.01"
-              value={learningRate}
-              onChange={(e) => setLearningRate(parseFloat(e.target.value))}
-            />
-            <span>{learningRate.toFixed(3)}</span>
-          </div>
-          
-          <div className={styles.outputSection}>
-            <div className={styles.outputItem}>
-              <span className={styles.outputLabel}>Output:</span>
-              <span className={styles.outputValue}>
-                {output !== null ? output.toFixed(6) : '—'}
-              </span>
-            </div>
-            <div className={styles.outputItem}>
-              <span className={styles.outputLabel}>Loss:</span>
-              <span className={styles.outputValue}>
-                {lastLoss !== null ? lastLoss.toFixed(6) : '—'}
-              </span>
-            </div>
-            <div className={styles.outputItem}>
-              <span className={styles.outputLabel}>Cycles:</span>
-              <span className={styles.outputValue}>{cycleCount}</span>
-            </div>
-          </div>
-        </section>
-
-        {/* Right Panel - Details */}
-        <section className={styles.detailsPanel}>
-          <div className={styles.panelHeader}>
-            <h2>Network Details</h2>
-            <button 
-              className={styles.collapseBtn}
-              onClick={() => setShowDetails(!showDetails)}
-            >
-              {showDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-            </button>
-          </div>
-          
-          {showDetails && networkState && (
-            <div className={styles.detailsContent}>
-              <div className={styles.weightsDisplay}>
-                <h3>Weights</h3>
-                <div className={styles.weightsGrid}>
-                  {networkState.weights.slice(0, 10).map((w, i) => (
-                    <div key={i} className={styles.weightItem}>
-                      <span className={styles.weightLabel}>W{i + 1}:</span>
-                      <span className={styles.weightValue}>
-                        {w.slice(0, 3).map(v => v.toFixed(4)).join(', ')}
-                        {w.length > 3 && '...'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className={styles.biasesDisplay}>
-                <h3>Biases</h3>
-                <div className={styles.biasesGrid}>
-                  {networkState.biases.slice(0, 10).map((b, i) => (
-                    <div key={i} className={styles.biasItem}>
-                      <span className={styles.biasLabel}>b{i + 1}:</span>
-                      <span className={styles.biasValue}>{b.toFixed(4)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {trainingHistory.length > 0 && (
-                <div className={styles.historyDisplay}>
-                  <h3>Training History</h3>
-                  <div className={styles.historyChart}>
-                    <div className={styles.chartBars}>
-                      {trainingHistory.slice(-20).map((step, i) => (
-                        <div 
-                          key={i}
-                          className={styles.chartBar}
-                          style={{ height: `${Math.min(100, step.loss * 100)}%` }}
-                          title={`Cycle ${step.cycle}: Loss ${step.loss.toFixed(4)}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className={styles.historyTable}>
-                    <div className={styles.historyHeader}>
-                      <span>Cycle</span>
-                      <span>Loss</span>
-                      <span>Prediction</span>
-                    </div>
-                    {trainingHistory.slice(-5).reverse().map((step, i) => (
-                      <div key={i} className={styles.historyRow}>
-                        <span>{step.cycle}</span>
-                        <span>{step.loss.toFixed(6)}</span>
-                        <span>{step.prediction.toFixed(4)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className={styles.explainSection}>
-                <div className={styles.explainToggle}>
-                  <button 
-                    className={explainMode === 'simple' ? styles.active : ''}
-                    onClick={() => setExplainMode('simple')}
-                  >
-                    Simple
-                  </button>
-                  <button 
-                    className={explainMode === 'technical' ? styles.active : ''}
-                    onClick={() => setExplainMode('technical')}
-                  >
-                    Technical
-                  </button>
-                </div>
-                
-                {explainMode === 'simple' ? (
-                  <div className={styles.explainContent}>
-                    <p><strong>How it learns:</strong> The network makes a prediction, calculates how wrong it was (loss), then adjusts weights to reduce that error.</p>
-                    <p><strong>Weights:</strong> Each weight controls how much one input affects a neuron. Higher weight = more influence.</p>
-                    <p><strong>Bias:</strong> The bias shifts the activation threshold, like a base tendency.</p>
-                  </div>
-                ) : (
-                  <div className={styles.explainContent}>
-                    <p><strong>Forward Pass:</strong> y = f(Wx + b) where f is activation, W is weights, x is inputs, b is bias.</p>
-                    <p><strong>Loss:</strong> L = (prediction - target)² for MSE</p>
-                    <p><strong>Gradient:</strong> ∂L/∂W = 2(prediction - target) × input</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-      </div>
+        )}
+      </main>
     </div>
   )
 }
