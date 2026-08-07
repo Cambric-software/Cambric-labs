@@ -42,9 +42,10 @@ jobs:
           npm install
 
       - name: Create build directory
+        shell: pwsh
         run: |
-          if not exist electron\build mkdir electron\build
-          if exist electron\build\icon.png echo Icon already exists
+          New-Item -ItemType Directory -Force -Path electron/build
+          Get-ChildItem electron/build
 
       - name: Build Windows executable
         run: |
