@@ -28,6 +28,7 @@ from tests.test_numerical_gradients import (
     verify_backward_no_update,
     verify_update_formula,
     verify_loss_gradient_numerical,
+    verify_numerical_gradient_uses_mean_reduction,
     DEFAULT_EPSILON,
     DEFAULT_RTOL
 )
@@ -326,8 +327,10 @@ class TestLayerGradients:
         layer.forward(inputs)
         output = layer._last_outputs
         
-        # Now backward with loss gradients
-        loss_grad = 2 * (output - np.array(targets))
+        # Now backward with loss gradients for MEAN-based MSE
+        # dL/doutput = 2 * (output - target) / n
+        n = len(targets)
+        loss_grad = 2 * (output - np.array(targets)) / n
         backward_result = layer.backward(loss_grad.tolist())
         
         # Check each neuron's weights
@@ -368,8 +371,10 @@ class TestLayerGradients:
         layer.forward(inputs)
         output = layer._last_outputs
         
-        # Now backward with loss gradients
-        loss_grad = 2 * (output - np.array(targets))
+        # Now backward with loss gradients for MEAN-based MSE
+        # dL/doutput = 2 * (output - target) / n
+        n = len(targets)
+        loss_grad = 2 * (output - np.array(targets)) / n
         backward_result = layer.backward(loss_grad.tolist())
         
         # Check each neuron's bias
@@ -617,6 +622,17 @@ class TestLossGradients:
         loss = LossFunctions.cross_entropy(predictions, targets)
         assert not np.isnan(loss), "Cross-entropy returned NaN for near-zero predictions"
         assert not np.isinf(loss), "Cross-entropy returned Inf for near-zero predictions"
+    
+    def test_numerical_gradient_uses_mean_reduction(self):
+        """
+        Regression test: Numerical gradient checker must use mean reduction (not sum).
+        
+        This test would fail if someone accidentally changed np.mean to np.sum in the
+        numerical gradient computation. Uses at least two values so mean and sum
+        produce different results.
+        """
+        passed, msg = verify_numerical_gradient_uses_mean_reduction()
+        assert passed, msg
 
 
 # ============================================================================

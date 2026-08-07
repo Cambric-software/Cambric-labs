@@ -676,9 +676,11 @@ class TestLayerGradientCheck:
         # Forward pass
         layer.forward(inputs)
         
-        # Compute loss gradient
+        # Compute loss gradient for MEAN-based MSE
+        # dL/doutput = 2 * (output - target) / n
         output = layer._last_outputs
-        loss_grad = 2 * (output - np.array(target))
+        n = len(target)
+        loss_grad = 2 * (output - np.array(target)) / n
         
         # Get analytical gradients
         result = layer.backward(loss_grad.tolist())
@@ -687,15 +689,15 @@ class TestLayerGradientCheck:
         # Store original
         orig_weight = layer.neurons[0].weights[0]
         
-        # L(θ + ε)
+        # L(θ + ε) - use np.mean to match production MSE loss
         layer.neurons[0].weights[0] = orig_weight + epsilon
         out_plus = layer.forward(inputs)['outputs']
-        loss_plus = np.sum((out_plus - np.array(target)) ** 2)
+        loss_plus = np.mean((out_plus - np.array(target)) ** 2)
         
-        # L(θ - ε)
+        # L(θ - ε) - use np.mean to match production MSE loss
         layer.neurons[0].weights[0] = orig_weight - epsilon
         out_minus = layer.forward(inputs)['outputs']
-        loss_minus = np.sum((out_minus - np.array(target)) ** 2)
+        loss_minus = np.mean((out_minus - np.array(target)) ** 2)
         
         # Restore
         layer.neurons[0].weights[0] = orig_weight

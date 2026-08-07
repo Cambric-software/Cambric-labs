@@ -346,21 +346,21 @@ class LayerGradientChecker:
         layer.reset_cache()
         layer.forward(inputs)
         outputs = layer._last_outputs
-        loss_orig = np.sum((outputs - np.array(targets)) ** 2)
+        loss_orig = np.mean((outputs - np.array(targets)) ** 2)
         
         # Forward at original + epsilon
         layer.neurons[neuron_idx].weights[weight_idx] = orig_weights[weight_idx] + self.epsilon
         layer.reset_cache()
         layer.forward(inputs)
         outputs = layer._last_outputs
-        loss_plus = np.sum((outputs - np.array(targets)) ** 2)
+        loss_plus = np.mean((outputs - np.array(targets)) ** 2)
         
         # Forward at original - epsilon
         layer.neurons[neuron_idx].weights[weight_idx] = orig_weights[weight_idx] - self.epsilon
         layer.reset_cache()
         layer.forward(inputs)
         outputs = layer._last_outputs
-        loss_minus = np.sum((outputs - np.array(targets)) ** 2)
+        loss_minus = np.mean((outputs - np.array(targets)) ** 2)
         
         # Restore
         layer.neurons[neuron_idx].weights = orig_weights.copy()
@@ -382,21 +382,21 @@ class LayerGradientChecker:
         layer.reset_cache()
         layer.forward(inputs)
         outputs = layer._last_outputs
-        loss_orig = np.sum((outputs - np.array(targets)) ** 2)
+        loss_orig = np.mean((outputs - np.array(targets)) ** 2)
         
         # Forward at original + epsilon
         layer.neurons[neuron_idx].bias = orig_bias + self.epsilon
         layer.reset_cache()
         layer.forward(inputs)
         outputs = layer._last_outputs
-        loss_plus = np.sum((outputs - np.array(targets)) ** 2)
+        loss_plus = np.mean((outputs - np.array(targets)) ** 2)
         
         # Forward at original - epsilon
         layer.neurons[neuron_idx].bias = orig_bias - self.epsilon
         layer.reset_cache()
         layer.forward(inputs)
         outputs = layer._last_outputs
-        loss_minus = np.sum((outputs - np.array(targets)) ** 2)
+        loss_minus = np.mean((outputs - np.array(targets)) ** 2)
         
         # Restore
         layer.neurons[neuron_idx].bias = orig_bias
@@ -428,19 +428,19 @@ class NetworkGradientChecker:
         # Forward and compute loss at original
         network.reset_cache()
         output = network.forward(inputs)['output']
-        loss_orig = np.sum((np.array(output) - np.array(targets)) ** 2)
+        loss_orig = np.mean((np.array(output) - np.array(targets)) ** 2)
         
         # Forward at original + epsilon
         layer.neurons[neuron_idx].weights[weight_idx] = orig_weights[weight_idx] + self.epsilon
         network.reset_cache()
         output = network.forward(inputs)['output']
-        loss_plus = np.sum((np.array(output) - np.array(targets)) ** 2)
+        loss_plus = np.mean((np.array(output) - np.array(targets)) ** 2)
         
         # Forward at original - epsilon
         layer.neurons[neuron_idx].weights[weight_idx] = orig_weights[weight_idx] - self.epsilon
         network.reset_cache()
         output = network.forward(inputs)['output']
-        loss_minus = np.sum((np.array(output) - np.array(targets)) ** 2)
+        loss_minus = np.mean((np.array(output) - np.array(targets)) ** 2)
         
         # Restore
         layer.neurons[neuron_idx].weights = orig_weights.copy()
@@ -463,19 +463,19 @@ class NetworkGradientChecker:
         # Forward and compute loss at original
         network.reset_cache()
         output = network.forward(inputs)['output']
-        loss_orig = np.sum((np.array(output) - np.array(targets)) ** 2)
+        loss_orig = np.mean((np.array(output) - np.array(targets)) ** 2)
         
         # Forward at original + epsilon
         layer.neurons[neuron_idx].bias = orig_bias + self.epsilon
         network.reset_cache()
         output = network.forward(inputs)['output']
-        loss_plus = np.sum((np.array(output) - np.array(targets)) ** 2)
+        loss_plus = np.mean((np.array(output) - np.array(targets)) ** 2)
         
         # Forward at original - epsilon
         layer.neurons[neuron_idx].bias = orig_bias - self.epsilon
         network.reset_cache()
         output = network.forward(inputs)['output']
-        loss_minus = np.sum((np.array(output) - np.array(targets)) ** 2)
+        loss_minus = np.mean((np.array(output) - np.array(targets)) ** 2)
         
         # Restore
         layer.neurons[neuron_idx].bias = orig_bias
@@ -640,3 +640,70 @@ def verify_loss_gradient_numerical(
     passed = max_rel_error < 1e-3
     
     return passed, max_rel_error
+
+
+def verify_numerical_gradient_uses_mean_reduction() -> Tuple[bool, str]:
+    """
+    Regression test: Verify numerical gradient checker uses mean (not sum) reduction.
+    
+    This test fails if someone accidentally changes np.mean to np.sum in the
+    numerical gradient computation. The test uses at least two values so that
+    mean and sum produce different results.
+    
+    Returns:
+        (passed, message)
+    """
+    import numpy as np
+    from backend.neural.network import Network
+    from backend.neural.layer import Layer
+    
+    # Create a simple network with multiple outputs
+    network = Network(name="test")
+    network.add_layer(Layer(name="l1", input_dim=2, output_dim=2, activation='identity'))
+    
+    inputs = [1.0, 2.0]
+    targets = [0.5, 1.5]
+    
+    # Verify production loss uses mean
+    output = network.forward(inputs)['output']
+    production_mse = LossFunctions.mse(output, targets)
+    
+    # Production MSE with mean reduction
+    expected_mse_mean = np.mean((np.array(output) - np.array(targets)) ** 2)
+    
+    # If someone uses sum instead of mean, they'd get a different result for multiple outputs
+    expected_mse_sum = np.sum((np.array(output) - np.array(targets)) ** 2)
+    
+    # Verify production uses mean (not sum)
+    if not np.isclose(production_mse, expected_mse_mean):
+        return False, f"Production loss should use mean reduction, got {production_mse} vs expected {expected_mse_mean}"
+    
+    if np.isclose(production_mse, expected_mse_sum) and len(targets) > 1:
+        # If they're equal for multiple outputs, production might be using sum
+        return False, "Production loss appears to use sum reduction instead of mean"
+    
+    # Now verify that numerical gradient checker also uses mean
+    checker = NetworkGradientChecker(epsilon=1e-5)
+    
+    # Compute numerical gradient for first weight
+    numerical_grad = checker.compute_numerical_network_weight_gradient(
+        network, inputs, targets, 0, 0, 0
+    )
+    
+    # If numerical gradient used sum instead of mean, it would be scaled by n (number of outputs)
+    # The analytical gradient from backward pass uses mean, so they should match
+    
+    # Get analytical gradient
+    network.reset_cache()
+    output = network.forward(inputs)['output']
+    loss_grad = [2 * (output[0] - targets[0]) / len(targets)] * len(output)  # Mean-scaled
+    gradient_result = network.backward(loss_grad)
+    analytical_grad = gradient_result['layer_gradients'][0]['neuron_gradients'][0]['weight_gradients'][0]
+    
+    # They should be close (within tolerance)
+    rel_error = abs(numerical_grad - analytical_grad) / max(abs(numerical_grad), abs(analytical_grad), 1e-8)
+    
+    if rel_error < 1e-3:
+        return True, f"Numerical gradient correctly uses mean reduction (analytical={analytical_grad:.6f}, numerical={numerical_grad:.6f})"
+    else:
+        return False, f"Numerical gradient does not match analytical gradient (analytical={analytical_grad:.6f}, numerical={numerical_grad:.6f}). May be using sum instead of mean."
