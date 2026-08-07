@@ -216,62 +216,13 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
-      - name: Delete existing release if exists
+      - name: Upload APK to Release
         run: |
-          if gh release view ${{ github.ref_name }} > /dev/null 2>&1; then
-            echo "Release exists, deleting..."
-            gh release delete ${{ github.ref_name }} --yes
-          else
-            echo "No existing release found"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: false
-          prerelease: false
-          files: |
-            artifacts/cambric-labs-android-release/*.apk
-          body: |
-            ## CAMBRIC LABS v${{ github.ref_name }}
-            
-            ### Downloads
-            - **Windows Installer**: CAMBRIC-LABS-*-Setup.exe
-            - **Windows Portable**: CAMBRIC-LABS-*-portable.exe (no installation required)
-            - **Android**: Cambric-Labs-Android-*.apk
-            
-            ### Features
-            - Local neural network training (no internet required)
-            - Create and train neural networks
-            - Visualize weights and gradients
-            - Export trained models
-            - Works completely offline
-            - No account required
-            
-            ### System Requirements
-            
-            **Windows:**
-            - Windows 10 or later
-            - 4GB RAM minimum
-            - 200MB disk space
-            
-            **Android:**
-            - Android 7.0 (API 24) or later
-            - 2GB RAM minimum
-            - 100MB storage space
-            
-            ### Installation
-            
-            **Windows:**
-            1. Download the installer or portable version
-            2. Run the installer (or extract the portable version)
-            3. Launch CAMBRIC LABS
-            
-            **Android:**
-            1. Download the APK to your Android device
-            2. Enable "Install from unknown sources" in settings
-            3. Open the APK file to install
+          for apk in artifacts/cambric-labs-android-release/*.apk; do
+            if [ -f "$apk" ]; then
+              echo "Uploading $apk..."
+              gh release upload ${{ github.ref_name }} "$apk" --clobber
+            fi
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
