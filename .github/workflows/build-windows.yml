@@ -60,7 +60,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cambric-labs-windows-${{ github.event.inputs.version || github.ref_name }}
-          path: electron/release/**/*.exe
+          path: |
+            electron/release/**/*.exe
+            !electron/release/**/*portable*.exe
           retention-days: 30
 
       - name: Upload portable version
