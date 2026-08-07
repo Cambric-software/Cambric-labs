@@ -90,16 +90,21 @@ class LossFunctions:
         """
         Derivative of cross-entropy (for binary classification with sigmoid).
         
-        When combined with sigmoid activation, simplifies to:
-        dL/dp = (prediction - target) / (prediction * (1 - prediction))
+        For L = -(1/n) * Σ [t*log(p) + (1-t)*log(1-p)]
+        dL/dp = (1/n) * [-t/p + (1-t)/(1-p)]
+        
+        Which simplifies to:
+        dL/dp = (p - t) / (p * (1 - p) * n)
         """
         pred = np.array(predictions, dtype=np.float64)
         tgt = np.array(targets, dtype=np.float64)
+        n = len(pred)
         
         # Clip for numerical stability
         pred = np.clip(pred, 1e-15, 1 - 1e-15)
         
-        return ((pred - tgt) / (pred * (1 - pred))).tolist()
+        # Include 1/n factor because forward uses mean
+        return ((pred - tgt) / (pred * (1 - pred)) / n).tolist()
     
     @staticmethod
     def categorical_cross_entropy(
