@@ -20,6 +20,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# Keep Electron build directory
+!electron/build/
+
 # Virtual environments
 venv/
 env/

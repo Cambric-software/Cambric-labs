@@ -22,9 +22,7 @@
       "**/*",
       "!node_modules/**/*",
       "!src/**/*",
-      "!*.md",
-      "!*.json",
-      "!tsconfig.json"
+      "!*.md"
     ],
     "win": {
       "target": [
