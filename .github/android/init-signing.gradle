@@ -1,0 +1,46 @@
+// CI-only Gradle init script: injects the Android release signing config
+// without modifying the Capacitor-generated app/build.gradle (no second
+// android {} block, no duplicate buildTypes).
+//
+// All credential values are read from environment variables populated by the
+// GitHub Actions workflow from repository secrets. No secret is ever written
+// to source, committed, or logged.
+//
+// Applied via: ./gradlew assembleRelease --init-script init-signing.gradle
+
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('com.android.application')) {
+            def keystoreFile = System.getenv('ANDROID_KEYSTORE_FILE')
+            if (keystoreFile == null || keystoreFile.isEmpty()) {
+                throw new GradleException('ANDROID_KEYSTORE_FILE env var is not set; cannot configure release signing')
+            }
+            def storeFile = project.file(keystoreFile)
+            if (!storeFile.exists()) {
+                throw new GradleException("Keystore not found at ANDROID_KEYSTORE_FILE=${storeFile.path}")
+            }
+            def storePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            def keyAlias = System.getenv('ANDROID_KEY_ALIAS')
+            def keyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+            if (storePassword == null || keyAlias == null || keyPassword == null) {
+                throw new GradleException('ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD env vars must all be set')
+            }
+            project.android {
+                signingConfigs {
+                    release {
+                        storeFile storeFile
+                        storePassword storePassword
+                        keyAlias keyAlias
+                        keyPassword keyPassword
+                    }
+                }
+                buildTypes {
+                    release {
+                        signingConfig signingConfigs.release
+                    }
+                }
+            }
+            project.logger.lifecycle('Release signing config applied to {}', project.path)
+        }
+    }
+}

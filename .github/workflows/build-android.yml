@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -78,7 +78,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
 
-      - name: Configure Release Signing
+      - name: Configure Gradle properties
         run: |
           cd frontend/android
           # Create gradle.properties to resolve Kotlin version conflicts
@@ -88,46 +88,82 @@ jobs:
             printf '\nconfigurations.all {\n    resolutionStrategy {\n        force "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"\n        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.22"\n        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"\n    }\n}\n' >> app/build.gradle
           fi
 
-      - name: Create Signing Config
+      - name: Decode release keystore
         id: signing
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          EXPECTED_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Signing secrets found, configuring release signing..."
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
-            # Configure signing in app/build.gradle using sed
-            if ! grep -q "signingConfigs" app/build.gradle; then
-              echo '' >> app/build.gradle
-              echo 'android {' >> app/build.gradle
-              echo '    signingConfigs {' >> app/build.gradle
-              echo '        release {' >> app/build.gradle
-              echo '            storeFile file("keystore.jks")' >> app/build.gradle
-              echo '            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")' >> app/build.gradle
-              echo '            keyAlias System.getenv("ANDROID_KEY_ALIAS")' >> app/build.gradle
-              echo '            keyPassword System.getenv("ANDROID_KEY_PASSWORD")' >> app/build.gradle
-              echo '        }' >> app/build.gradle
-              echo '    }' >> app/build.gradle
-              echo '    buildTypes {' >> app/build.gradle
-              echo '        release {' >> app/build.gradle
-              echo '            signingConfig signingConfigs.release' >> app/build.gradle
-              echo '        }' >> app/build.gradle
-              echo '    }' >> app/build.gradle
-              echo '}' >> app/build.gradle
-              echo "Added signing config to build.gradle"
-            else
-              echo "Signing config already exists"
-            fi
-            echo "signing_enabled=true" >> $GITHUB_OUTPUT
-          else
-            echo "No signing secrets found, building unsigned release..."
-            echo "signing_enabled=false" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set; cannot produce a signed release APK"
+            exit 1
           fi
+          # Decode the keystore into the runner's temp dir (outside the repo,
+          # automatically cleared after the job; never committed to git).
+          KEYSTORE_PATH="$RUNNER_TEMP/cambric-release.keystore"
+          # Write the secret to a temp file, then strip ALL whitespace
+          # (newlines/CR/spaces from copy-paste wrapping) before base64-decoding.
+          B64_RAW="$RUNNER_TEMP/keystore.b64"
+          printf '%s' '${{ secrets.ANDROID_KEYSTORE_BASE64 }}' > "$B64_RAW"
+          B64_LEN=$(wc -c < "$B64_RAW")
+          echo "Raw base64 input length: $B64_LEN bytes"
+          # Check for characters outside the base64 alphabet (does not print values).
+          if tr -d 'A-Za-z0-9+/=\n\r \t' < "$B64_RAW" | grep -q .; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 contains characters outside the base64 alphabet; re-store the secret as clean single-line base64"
+            exit 1
+          fi
+          tr -d '[:space:]' < "$B64_RAW" > "$RUNNER_TEMP/keystore.clean.b64"
+          rm -f "$B64_RAW"
+          CLEAN_LEN=$(wc -c < "$RUNNER_TEMP/keystore.clean.b64")
+          echo "Stripped base64 length: $CLEAN_LEN bytes (mod 4: $(( CLEAN_LEN % 4 )))"
+          # Recover missing '=' padding if the stored value was stripped of it.
+          MOD=$(( CLEAN_LEN % 4 ))
+          if [ "$MOD" -ne 0 ]; then
+            PADDING=$(( 4 - MOD ))
+            printf '%0.s=' $(seq 1 "$PADDING") >> "$RUNNER_TEMP/keystore.clean.b64"
+            echo "Appended $PADDING padding character(s)."
+          fi
+          base64 -d "$RUNNER_TEMP/keystore.clean.b64" > "$KEYSTORE_PATH"
+          rm -f "$RUNNER_TEMP/keystore.clean.b64"
+          if [ ! -s "$KEYSTORE_PATH" ]; then
+            echo "::error::Decoded keystore is empty; ANDROID_KEYSTORE_BASE64 did not decode to a valid keystore"
+            exit 1
+          fi
+          echo "Keystore decoded to runner temp (size: $(stat -c %s "$KEYSTORE_PATH") bytes)"
+          file "$KEYSTORE_PATH"
+          # Validate that the result is a real PKCS12 keystore and that the
+          # expected alias is present. keytool -list prints the alias and the
+          # public certificate info only; it never prints the password or the
+          # private key material.
+          if ! keytool -list -storetype PKCS12 -keystore "$KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keytool.out" 2>&1; then
+            echo "::error::Decoded keystore is not a valid PKCS12 keystore, or ANDROID_KEYSTORE_PASSWORD is wrong"
+            sed -E 's/[A-Za-z0-9+/]{40,}/***MASKED***/g' "$RUNNER_TEMP/keytool.out"
+            exit 1
+          fi
+          if ! grep -qi "Keystore type: PKCS12" "$RUNNER_TEMP/keytool.out"; then
+            echo "::error::Keystore is not PKCS12 type"
+            sed -E 's/[A-Za-z0-9+/]{40,}/***MASKED***/g' "$RUNNER_TEMP/keytool.out"
+            exit 1
+          fi
+          echo "keytool keystore validation PASSED"
+          grep -iE "Keystore type|Keystore provider|Alias name" "$RUNNER_TEMP/keytool.out" || true
+          if ! grep -qi "Alias name: ${EXPECTED_ALIAS}" "$RUNNER_TEMP/keytool.out"; then
+            echo "::error::Expected alias '${EXPECTED_ALIAS}' not found in keystore"
+            sed -E 's/[A-Za-z0-9+/]{40,}/***MASKED***/g' "$RUNNER_TEMP/keytool.out"
+            exit 1
+          fi
+          echo "Alias '${EXPECTED_ALIAS}' present in keystore."
+          rm -f "$RUNNER_TEMP/keytool.out"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
       - name: Build Release APK
         run: |
           cd frontend/android
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --init-script "$GITHUB_WORKSPACE/.github/android/init-signing.gradle"
         env:
           VERSION_NAME: ${{ github.event.inputs.version || github.ref_name }}
+          ANDROID_KEYSTORE_FILE: ${{ env.ANDROID_KEYSTORE_PATH }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
@@ -137,52 +173,57 @@ jobs:
           cd frontend/android
           ./gradlew assembleDebug
 
-      - name: Verify Release APK
+      - name: Verify signed Release APK
         run: |
+          set -euo pipefail
           echo "=== Verifying Release APK ==="
-          # Check for signed or unsigned release APK
           SIGNED_APK="frontend/android/app/build/outputs/apk/release/app-release.apk"
           UNSIGNED_APK="frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk"
-          APK_PATH=""
-          
-          if [ -f "$SIGNED_APK" ]; then
-            APK_PATH="$SIGNED_APK"
-            echo "✓ Signed Release APK found: $APK_PATH"
-          elif [ -f "$UNSIGNED_APK" ]; then
-            APK_PATH="$UNSIGNED_APK"
-            echo "⚠ Unsigned Release APK found: $APK_PATH"
-            echo "Note: Set ANDROID_KEYSTORE_BASE64 secret to build a signed APK"
-          else
-            echo "✗ Release APK NOT found"
-            echo "Available files:"
-            find frontend/android/app/build/outputs -name "*.apk" 2>/dev/null || echo "No APKs found"
+
+          if [ -f "$UNSIGNED_APK" ]; then
+            echo "::error::Release build produced an UNSIGNED APK ($UNSIGNED_APK); signing configuration did not take effect"
             exit 1
           fi
-          
-          ls -lh "$APK_PATH"
-          
-          # Check APK structure
-          if command -v unzip &> /dev/null; then
-            echo "APK contents:"
-            unzip -l "$APK_PATH" 2>/dev/null | head -30
+          if [ ! -f "$SIGNED_APK" ]; then
+            echo "::error::No release APK found at $SIGNED_APK"
+            find frontend/android/app/build/outputs -name "*.apk" 2>/dev/null || true
+            exit 1
+          fi
+
+          echo "Signed Release APK found: $SIGNED_APK"
+          ls -lh "$SIGNED_APK"
+
+          # apksigner (from build-tools) verifies the v1/v2/v3 signature and
+          # prints the signing certificate. Only public cert info is shown.
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          BT=""
+          if [ -n "$SDK_ROOT" ]; then
+            BT=$(find "$SDK_ROOT" -name apksigner -type f 2>/dev/null | head -1)
+          fi
+          if [ -z "$BT" ]; then
+            echo "::warning::apksigner not found on runner; skipping signature verification step"
+          else
+            echo "Using apksigner: $BT"
+            "$BT" verify --print-certs "$SIGNED_APK" && echo "apksigner verification PASSED"
           fi
 
       - name: Rename Release APK
         run: |
+          set -euo pipefail
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
-          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
-          # Check for signed or unsigned APK
-          if [ -f "frontend/android/app/build/outputs/apk/release/app-release.apk" ]; then
-            APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
-            RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}.apk"
-          else
-            APK_PATH="frontend/android/app/build/outputs/apk/release/app-release-unsigned.apk"
-            RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}-unsigned.apk"
-          fi
-          if [ -f "$APK_PATH" ]; then
-            cp "$APK_PATH" "$RENAMED_PATH"
-            echo "✓ Renamed APK to: $RENAMED_PATH"
-            ls -lh "$RENAMED_PATH"
+          VERSION="${VERSION#v}"
+          APK_PATH="frontend/android/app/build/outputs/apk/release/app-release.apk"
+          RENAMED_PATH="frontend/android/app/build/outputs/apk/release/Cambric-Labs-Android-${VERSION}.apk"
+          cp "$APK_PATH" "$RENAMED_PATH"
+          echo "Renamed APK to: $RENAMED_PATH"
+          ls -lh "$RENAMED_PATH"
+
+      - name: Remove decoded keystore from runner
+        if: always()
+        run: |
+          if [ -n "${{ env.ANDROID_KEYSTORE_PATH }}" ] && [ -f "${{ env.ANDROID_KEYSTORE_PATH }}" ]; then
+            rm -f "${{ env.ANDROID_KEYSTORE_PATH }}"
+            echo "Decoded keystore removed from runner."
           fi
 
       - name: Upload release APK
@@ -209,7 +250,7 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: write
-    
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
