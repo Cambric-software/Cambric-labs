@@ -28,15 +28,15 @@ allprojects {
             project.android {
                 signingConfigs {
                     release {
-                        storeFile storeFile
-                        storePassword storePassword
-                        keyAlias keyAlias
-                        keyPassword keyPassword
+                        storeFile = storeFile
+                        storePassword = storePassword
+                        keyAlias = keyAlias
+                        keyPassword = keyPassword
                     }
                 }
                 buildTypes {
                     release {
-                        signingConfig signingConfigs.release
+                        signingConfig = signingConfigs.release
                     }
                 }
             }
