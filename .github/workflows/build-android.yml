@@ -219,10 +219,18 @@ jobs:
 
       - name: Upload APK to Release
         run: |
+          RELEASE_ID=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} | \
+            python3 -c "import sys, json; print(json.load(sys.stdin)['id'])")
           for apk in artifacts/cambric-labs-android-release/*.apk; do
             if [ -f "$apk" ]; then
               echo "Uploading $apk..."
-              gh release upload ${{ github.ref_name }} "$apk" --clobber -R ${{ github.repository }}
+              FILENAME=$(basename "$apk")
+              curl -s -X POST \
+                -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Content-Type: application/octet-stream" \
+                --data-binary "@$apk" \
+                "https://uploads.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets?name=$FILENAME"
             fi
           done
         env:
