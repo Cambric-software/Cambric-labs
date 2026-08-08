@@ -133,10 +133,10 @@ jobs:
           echo "Keystore decoded to runner temp (size: $(stat -c %s "$KEYSTORE_PATH") bytes)"
           file "$KEYSTORE_PATH"
           # Validate that the result is a real PKCS12 keystore and that the
-          # expected alias is present. keytool -list prints the alias and the
-          # public certificate info only; it never prints the password or the
-          # private key material.
-          if ! keytool -list -storetype PKCS12 -keystore "$KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keytool.out" 2>&1; then
+          # expected alias is present. keytool -list -v prints the alias and
+          # the public certificate info (incl. SHA-256 fingerprint); it never
+          # prints the password or the private key material.
+          if ! keytool -list -v -storetype PKCS12 -keystore "$KEYSTORE_PATH" -storepass "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/keytool.out" 2>&1; then
             echo "::error::Decoded keystore is not a valid PKCS12 keystore, or ANDROID_KEYSTORE_PASSWORD is wrong"
             sed -E 's/[A-Za-z0-9+/]{40,}/***MASKED***/g' "$RUNNER_TEMP/keytool.out"
             exit 1
@@ -147,7 +147,8 @@ jobs:
             exit 1
           fi
           echo "keytool keystore validation PASSED"
-          grep -iE "Keystore type|Keystore provider|Alias name" "$RUNNER_TEMP/keytool.out" || true
+          # Print only non-sensitive public certificate metadata.
+          grep -iE "Keystore type|Keystore provider|Alias name|SHA256|Valid from" "$RUNNER_TEMP/keytool.out" || true
           if ! grep -qi "Alias name: ${EXPECTED_ALIAS}" "$RUNNER_TEMP/keytool.out"; then
             echo "::error::Expected alias '${EXPECTED_ALIAS}' not found in keystore"
             sed -E 's/[A-Za-z0-9+/]{40,}/***MASKED***/g' "$RUNNER_TEMP/keytool.out"
