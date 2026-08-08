@@ -52,7 +52,7 @@ jobs:
       - name: Build Windows executable
         run: |
           cd electron
-          npm run build
+          npm run build -- --win --x64 -c.win.artifactName="${productName}-${version}.${ext}" -c.win.NSIS.artifactName="${productName}.Setup.${version}.${ext}"
         env:
           VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
