@@ -222,7 +222,7 @@ jobs:
           for apk in artifacts/cambric-labs-android-release/*.apk; do
             if [ -f "$apk" ]; then
               echo "Uploading $apk..."
-              gh release upload ${{ github.ref_name }} "$apk" --clobber
+              gh release upload ${{ github.ref_name }} "$apk" --clobber -R ${{ github.repository }}
             fi
           done
         env:
