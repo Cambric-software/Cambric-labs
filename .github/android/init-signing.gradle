@@ -11,27 +11,32 @@
 allprojects {
     afterEvaluate { project ->
         if (project.plugins.hasPlugin('com.android.application')) {
-            def keystoreFile = System.getenv('ANDROID_KEYSTORE_FILE')
-            if (keystoreFile == null || keystoreFile.isEmpty()) {
+            def ksEnvPath = System.getenv('ANDROID_KEYSTORE_FILE')
+            if (ksEnvPath == null || ksEnvPath.isEmpty()) {
                 throw new GradleException('ANDROID_KEYSTORE_FILE env var is not set; cannot configure release signing')
             }
-            def storeFile = project.file(keystoreFile)
-            if (!storeFile.exists()) {
-                throw new GradleException("Keystore not found at ANDROID_KEYSTORE_FILE=${storeFile.path}")
+            def ksStoreFile = project.file(ksEnvPath)
+            if (!ksStoreFile.exists()) {
+                throw new GradleException("Keystore not found at ANDROID_KEYSTORE_FILE=${ksStoreFile.path}")
             }
-            def storePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
-            def keyAlias = System.getenv('ANDROID_KEY_ALIAS')
-            def keyPassword = System.getenv('ANDROID_KEY_PASSWORD')
-            if (storePassword == null || keyAlias == null || keyPassword == null) {
+            def ksStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            def ksKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+            def ksKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+            if (ksStorePassword == null || ksKeyAlias == null || ksKeyPassword == null) {
                 throw new GradleException('ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD env vars must all be set')
             }
+            // Inside the signingConfigs/release closure the delegate is the
+            // SigningConfig, whose own properties are named storeFile,
+            // storePassword, keyAlias, keyPassword. If a local shared that
+            // name, `storeFile = storeFile` would read the delegate's (null)
+            // value. Distinct `ks*` locals avoid that shadowing.
             project.android {
                 signingConfigs {
                     release {
-                        storeFile = storeFile
-                        storePassword = storePassword
-                        keyAlias = keyAlias
-                        keyPassword = keyPassword
+                        storeFile = ksStoreFile
+                        storePassword = ksStorePassword
+                        keyAlias = ksKeyAlias
+                        keyPassword = ksKeyPassword
                     }
                 }
                 buildTypes {
