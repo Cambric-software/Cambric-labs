@@ -103,7 +103,7 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }})
           if [ "$RESPONSE" = "200" ]; then
             echo "Release exists, deleting..."
-            gh release delete ${{ github.ref_name }} --yes
+            gh release delete ${{ github.ref_name }} --yes -R ${{ github.repository }}
           else
             echo "No existing release found (HTTP $RESPONSE)"
           fi
