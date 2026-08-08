@@ -54,3 +54,13 @@ htmlcov/
 # Frontend build output (generated during build)
 docs/app/
 frontend/android/
+
+# Android signing material — must NEVER be committed.
+# Keystores and derived secrets live only in GitHub Actions secrets.
+*.p12
+*.jks
+*.keystore
+*.b64
+keystore*.txt
+*release.keystore
+*-release-key.*
