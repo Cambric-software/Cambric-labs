@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional, Union
 import uuid
 import json
+import os
 from pathlib import Path
 import asyncio
 
@@ -41,13 +42,20 @@ security = HTTPBearer(auto_error=False)
 neurons_db: Dict[str, Dict[str, Any]] = {}
 networks_db: Dict[str, Dict[str, Any]] = {}
 
-# Initialize Supabase storage (graceful degradation if not available)
+# Initialize Supabase storage (graceful degradation if not configured).
+# Credentials are loaded exclusively from environment variables; none are
+# hardcoded. The integration is optional for local-first deployments.
 supabase_client = None
 try:
     from supabase import create_client
-    SUPABASE_URL = "https://dafgzzkerytjuvxzymnq.supabase.co"
-    SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZmd6emtlcnl0anV2eHp5bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTE1MDUsImV4cCI6MjA5OTI4NzUwNX0.bZdxqNuy1ZyHMGzBieq7BzUd6IUEhfHEZxL-YTka3DQ"
-    supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    _supabase_url = os.environ.get("SUPABASE_URL")
+    _supabase_anon_key = os.environ.get("SUPABASE_ANON_KEY")
+    if not _supabase_url or not _supabase_anon_key:
+        raise RuntimeError(
+            "SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required "
+            "to enable Supabase; skipping (local-first mode)."
+        )
+    supabase_client = create_client(_supabase_url, _supabase_anon_key)
 except Exception as e:
     print(f"Warning: Supabase not available: {e}")
 

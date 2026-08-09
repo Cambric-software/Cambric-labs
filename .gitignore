@@ -54,3 +54,11 @@ htmlcov/
 # Frontend build output (generated during build)
 docs/app/
 frontend/android/
+
+# Environment files — real secrets must never be committed.
+.env
+.env.local
+.env.*.local
+*.env
+!/.env.example
+!/.gitignore
