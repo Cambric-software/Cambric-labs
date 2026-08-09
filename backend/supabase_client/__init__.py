@@ -9,36 +9,62 @@ import os
 from typing import Dict, Any, List, Optional
 from supabase import create_client, Client
 
-# Environment variables
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://dafgzzkerytjuvxzymnq.supabase.co")
-SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZmd6emtlcnl0anV2eHp5bW5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTE1MDUsImV4cCI6MjA5OTI4NzUwNX0.bZdxqNuy1ZyHMGzBieq7BzUd6IUEhfHEZxL-YTka3DQ")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhZmd6emtlcnl0anV2eHp5bW5xIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzcxMTUwNSwiZXhwIjoyMDk5Mjg3NTA1fQ.uetNhm9ZZfinHiol3tCe8Y5e4OIBQBegxWWLP2wTuWM")
+# Supabase configuration is loaded exclusively from environment variables.
+# No credentials are hardcoded. In a local-first deployment the Supabase
+# integration is optional; when the required env vars are absent the storage
+# layer degrades gracefully instead of crashing.
+#
+# Required for the anon (public/RLS-scoped) client:
+#   SUPABASE_URL
+#   SUPABASE_ANON_KEY
+# Required additionally for the service-role (RLS-bypassing) client:
+#   SUPABASE_SERVICE_ROLE_KEY   (server-side only — NEVER expose client-side)
 
-# Global client instance
+
+def _required_env(name: str) -> str:
+    """Read a required environment variable, failing clearly (no value printed)."""
+    val = os.environ.get(name)
+    if not val:
+        raise RuntimeError(
+            f"Required environment variable '{name}' is not set. "
+            "Supabase integration is disabled until it is provided at runtime."
+        )
+    return val
+
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+
+# Global client instances
 _supabase_client: Optional[Client] = None
+_service_client: Optional[Client] = None
 
 
 def get_supabase_client() -> Client:
     """
-    Get or create the Supabase client singleton.
-    
+    Get or create the Supabase anon client singleton.
+
     Returns:
         Supabase client instance
     """
     global _supabase_client
     if _supabase_client is None:
-        _supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        _supabase_client = create_client(_required_env("SUPABASE_URL"), _required_env("SUPABASE_ANON_KEY"))
     return _supabase_client
 
 
 def get_service_client() -> Client:
     """
     Get Supabase client with service role key (for admin operations).
-    
+
     Returns:
         Supabase service client instance
     """
-    return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+    global _service_client
+    if _service_client is None:
+        _service_client = create_client(_required_env("SUPABASE_URL"), _required_env("SUPABASE_SERVICE_ROLE_KEY"))
+    return _service_client
 
 
 class SupabaseStorage:
@@ -413,6 +439,19 @@ class SupabaseStorage:
         return len(response.data) > 0
 
 
-# Create default storage instances
-storage = SupabaseStorage()
-admin_storage = SupabaseStorage(use_service_role=True)
+# Create default storage instances.
+# These degrade gracefully to None when Supabase credentials are not provided
+# via environment variables, so importing this module never crashes a
+# local-first deployment that does not use Supabase.
+storage: Optional["SupabaseStorage"] = None
+admin_storage: Optional["SupabaseStorage"] = None
+try:
+    storage = SupabaseStorage()
+except RuntimeError:
+    # SUPABASE_URL / SUPABASE_ANON_KEY not configured — optional integration.
+    pass
+try:
+    admin_storage = SupabaseStorage(use_service_role=True)
+except RuntimeError:
+    # SUPABASE_SERVICE_ROLE_KEY not configured — admin operations unavailable.
+    pass

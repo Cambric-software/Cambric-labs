@@ -1,57 +1,10 @@
 import { useState } from 'react'
-import { Code2, FlaskConical, FileCode, Lock, Eye, EyeOff } from 'lucide-react'
+import { Code2, FlaskConical, FileCode } from 'lucide-react'
 import styles from './AdminPage.module.css'
 
 export function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [activeTab, setActiveTab] = useState<'explorer' | 'custom' | 'settings'>('explorer')
-  
-  // Mock authentication (in production, use proper auth)
-  const handleAuth = () => {
-    if (password === 'cambric-dev') {
-      setIsAuthenticated(true)
-    }
-  }
-  
-  if (!isAuthenticated) {
-    return (
-      <div className={styles.authPage}>
-        <div className={styles.authCard}>
-          <Lock size={48} className={styles.lockIcon} />
-          <h1>Developer Area</h1>
-          <p>Enter the developer password to access advanced features.</p>
-          
-          <div className={styles.authForm}>
-            <div className={styles.passwordField}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAuth()}
-              />
-              <button
-                className={styles.togglePassword}
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            <button className={styles.authBtn} onClick={handleAuth}>
-              Access
-            </button>
-          </div>
-          
-          <p className={styles.hint}>
-            Hint: For development, use 'cambric-dev'
-          </p>
-        </div>
-      </div>
-    )
-  }
-  
+
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -59,12 +12,6 @@ export function AdminPage() {
           <Code2 size={28} />
           Developer Area
         </h1>
-        <button 
-          className={styles.logoutBtn}
-          onClick={() => setIsAuthenticated(false)}
-        >
-          Logout
-        </button>
       </header>
       
       <div className={styles.content}>
