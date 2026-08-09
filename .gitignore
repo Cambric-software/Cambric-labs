@@ -62,3 +62,13 @@ frontend/android/
 *.env
 !/.env.example
 !/.gitignore
+
+# Android signing material — must NEVER be committed.
+# Keystores and derived secrets live only in GitHub Actions secrets.
+*.p12
+*.jks
+*.keystore
+*.b64
+keystore*.txt
+*release.keystore
+*-release-key.*

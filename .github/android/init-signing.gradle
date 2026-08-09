@@ -1,0 +1,51 @@
+// CI-only Gradle init script: injects the Android release signing config
+// without modifying the Capacitor-generated app/build.gradle (no second
+// android {} block, no duplicate buildTypes).
+//
+// All credential values are read from environment variables populated by the
+// GitHub Actions workflow from repository secrets. No secret is ever written
+// to source, committed, or logged.
+//
+// Applied via: ./gradlew assembleRelease --init-script init-signing.gradle
+
+allprojects {
+    afterEvaluate { project ->
+        if (project.plugins.hasPlugin('com.android.application')) {
+            def ksEnvPath = System.getenv('ANDROID_KEYSTORE_FILE')
+            if (ksEnvPath == null || ksEnvPath.isEmpty()) {
+                throw new GradleException('ANDROID_KEYSTORE_FILE env var is not set; cannot configure release signing')
+            }
+            def ksStoreFile = project.file(ksEnvPath)
+            if (!ksStoreFile.exists()) {
+                throw new GradleException("Keystore not found at ANDROID_KEYSTORE_FILE=${ksStoreFile.path}")
+            }
+            def ksStorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            def ksKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+            def ksKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
+            if (ksStorePassword == null || ksKeyAlias == null || ksKeyPassword == null) {
+                throw new GradleException('ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS / ANDROID_KEY_PASSWORD env vars must all be set')
+            }
+            // Inside the signingConfigs/release closure the delegate is the
+            // SigningConfig, whose own properties are named storeFile,
+            // storePassword, keyAlias, keyPassword. If a local shared that
+            // name, `storeFile = storeFile` would read the delegate's (null)
+            // value. Distinct `ks*` locals avoid that shadowing.
+            project.android {
+                signingConfigs {
+                    release {
+                        storeFile = ksStoreFile
+                        storePassword = ksStorePassword
+                        keyAlias = ksKeyAlias
+                        keyPassword = ksKeyPassword
+                    }
+                }
+                buildTypes {
+                    release {
+                        signingConfig = signingConfigs.release
+                    }
+                }
+            }
+            project.logger.lifecycle('Release signing config applied to {}', project.path)
+        }
+    }
+}
