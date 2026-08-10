@@ -5,7 +5,7 @@ import {
 } from 'lucide-react'
 import {
   registerDevAreaAnalyzers, runAnalysis, flattenFindings, summarizeByCategory,
-  suggestRefactors, generateTests,
+  suggestRefactors, generateTests, comparisonSuggestions,
 } from '../devarea'
 import { listLanguages } from '../curriculum'
 import type { Finding, FindingCategory, RefactorSuggestion, GeneratedTest } from '../devarea'
@@ -89,6 +89,7 @@ export function AdminPage() {
   const [languageId, setLanguageId] = useState<string>('javascript')
   const [code, setCode] = useState<string>(SAMPLE_CODE['javascript'])
   const [hasRun, setHasRun] = useState(false)
+  const [compareTarget, setCompareTarget] = useState<string>('python')
 
   const languages = useMemo(() => listLanguages().filter((l) => l.analyzable), [])
 
@@ -106,6 +107,16 @@ export function AdminPage() {
   const tests = useMemo(
     () => (hasRun ? generateTests({ code, languageId }) : []),
     [hasRun, code, languageId],
+  )
+  const comparisons = useMemo(
+    () => {
+      if (!hasRun) return []
+      const target = compareTarget === languageId
+        ? languages.find((l) => l.id !== languageId)?.id ?? compareTarget
+        : compareTarget
+      return comparisonSuggestions({ code, languageId }, target)
+    },
+    [hasRun, code, languageId, compareTarget, languages],
   )
 
   const onSelectLanguage = (id: string) => {
@@ -157,6 +168,9 @@ export function AdminPage() {
               summary={summary}
               refactors={refactors}
               tests={tests}
+              comparisons={comparisons}
+              compareTarget={compareTarget}
+              onSelectCompareTarget={setCompareTarget}
               onSelectLanguage={onSelectLanguage}
               onLoadSample={onLoadSample}
               onCodeChange={(c) => { setCode(c); setHasRun(false) }}
@@ -189,6 +203,9 @@ interface AnalysisWorkspaceProps {
   summary: Record<FindingCategory, number>
   refactors: RefactorSuggestion[]
   tests: GeneratedTest[]
+  comparisons: RefactorSuggestion[]
+  compareTarget: string
+  onSelectCompareTarget: (id: string) => void
   onSelectLanguage: (id: string) => void
   onLoadSample: () => void
   onCodeChange: (code: string) => void
@@ -198,6 +215,7 @@ interface AnalysisWorkspaceProps {
 function AnalysisWorkspace(props: AnalysisWorkspaceProps) {
   const {
     languageId, languages, code, hasRun, findings, summary, refactors, tests,
+    comparisons, compareTarget, onSelectCompareTarget,
     onSelectLanguage, onLoadSample, onCodeChange, onRun,
   } = props
   const totalFindings = findings.length
@@ -307,6 +325,46 @@ function AnalysisWorkspace(props: AnalysisWorkspaceProps) {
                 </div>
               ))}
             </div>
+          )}
+
+          <h3 className={styles.sectionTitle}>
+            <FileCode size={18} /> Language Comparison
+          </h3>
+          <div className={styles.compareBar}>
+            <label className={styles.field}>
+              <span>Compare to</span>
+              <select
+                value={compareTarget}
+                onChange={(e) => onSelectCompareTarget(e.target.value)}
+              >
+                {languages
+                  .filter((l) => l.id !== languageId)
+                  .map((l) => (
+                    <option key={l.id} value={l.id}>{l.name}</option>
+                  ))}
+              </select>
+            </label>
+          </div>
+          {comparisons.length === 0 ? (
+            <p className={styles.empty}>
+              No recognized patterns to compare, or same source language selected.
+              Try a snippet with a function, string interpolation, loop, or map.
+            </p>
+          ) : (
+            <ul className={styles.findingsList}>
+              {comparisons.map((r, i) => (
+                <li key={`${r.id}-${i}`} className={styles.refactorItem}>
+                  <div className={styles.refactorHead}>{r.title}</div>
+                  <p className={styles.refactorRationale}>{r.rationale}</p>
+                  {r.before && (
+                    <pre className={styles.snippet}><code>{r.before}</code></pre>
+                  )}
+                  {r.after && (
+                    <pre className={styles.snippetAlt}><code>{r.after}</code></pre>
+                  )}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}

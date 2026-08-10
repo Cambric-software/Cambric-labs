@@ -594,3 +594,10 @@
   font-size: var(--lab-text-sm);
   font-style: italic;
 }
+
+.compareBar {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-3);
+  margin-bottom: var(--lab-space-3);
+}

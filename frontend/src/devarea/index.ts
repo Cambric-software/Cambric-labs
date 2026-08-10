@@ -8,6 +8,7 @@
 import { registerAnalyzer } from './engine'
 import { JAVASCRIPT_ANALYZERS } from './analyzers/javascript'
 import { PYTHON_ANALYZERS } from './analyzers/python'
+import { TYPESCRIPT_ANALYZERS } from './analyzers/typescript'
 
 let registered = false
 
@@ -15,7 +16,7 @@ let registered = false
 export function registerDevAreaAnalyzers(): void {
   if (registered) return
   registered = true
-  for (const analyzer of [...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS]) {
+  for (const analyzer of [...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS]) {
     registerAnalyzer(analyzer)
   }
 }
@@ -24,5 +25,8 @@ export * from './types'
 export * from './engine'
 export { suggestRefactors } from './suggestions/refactor'
 export { generateTests } from './suggestions/tests'
+export { compareLanguages, comparisonSuggestions } from './suggestions/compare'
+export type { ComparisonResult } from './suggestions/compare'
 export { JAVASCRIPT_ANALYZERS } from './analyzers/javascript'
 export { PYTHON_ANALYZERS } from './analyzers/python'
+export { TYPESCRIPT_ANALYZERS } from './analyzers/typescript'
