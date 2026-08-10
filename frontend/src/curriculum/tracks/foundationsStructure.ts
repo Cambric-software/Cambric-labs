@@ -41,7 +41,7 @@ const moduleBinaryAndData: CurriculumModule = {
   courseId: 'course-how-computers-work',
   title: 'Binary & Data',
   summary: 'How computers represent everything with 0s and 1s.',
-  lessonIds: [],
+  lessonIds: ['lesson-binary'],
 }
 
 const moduleHardware: CurriculumModule = {

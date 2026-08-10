@@ -40,7 +40,7 @@ const moduleGit: CurriculumModule = {
   courseId: 'course-version-control',
   title: 'Git & Branching',
   summary: 'Commits, branches, and merging.',
-  lessonIds: [],
+  lessonIds: ['lesson-git'],
 }
 
 const moduleCodeReview: CurriculumModule = {

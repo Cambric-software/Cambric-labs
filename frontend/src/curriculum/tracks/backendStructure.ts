@@ -63,7 +63,7 @@ const moduleSql: CurriculumModule = {
   courseId: 'course-databases',
   title: 'SQL Fundamentals',
   summary: 'SELECT, INSERT, JOIN, and querying relational data.',
-  lessonIds: [],
+  lessonIds: ['lesson-sql'],
 }
 
 const moduleRelationalDesign: CurriculumModule = {

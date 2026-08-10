@@ -49,7 +49,7 @@ const moduleLinkedLists: CurriculumModule = {
   courseId: 'course-linear-structures',
   title: 'Linked Lists',
   summary: 'Nodes linked by pointers; insertion and traversal.',
-  lessonIds: [],
+  lessonIds: ['lesson-linked-lists'],
 }
 
 const moduleStacksQueues: CurriculumModule = {

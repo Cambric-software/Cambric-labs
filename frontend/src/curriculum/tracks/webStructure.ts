@@ -40,7 +40,7 @@ const moduleHtml: CurriculumModule = {
   courseId: 'course-web-fundamentals',
   title: 'HTML',
   summary: 'The structure of a web page.',
-  lessonIds: [],
+  lessonIds: ['lesson-html'],
 }
 
 const moduleCss: CurriculumModule = {

@@ -55,7 +55,7 @@ const moduleMlIntro: CurriculumModule = {
   courseId: 'course-ml-foundations',
   title: 'What Is ML?',
   summary: 'Learning from data instead of rules.',
-  lessonIds: [],
+  lessonIds: ['lesson-what-is-ml'],
 }
 
 const moduleNeuralNetworks: CurriculumModule = {

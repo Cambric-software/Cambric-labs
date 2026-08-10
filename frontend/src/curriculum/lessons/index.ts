@@ -34,6 +34,12 @@ import { lessonRecursion } from './lessonRecursion'
 import { lessonLists } from './lessonLists'
 import { lessonStrings } from './lessonStrings'
 import { lessonDictionaries } from './lessonDictionaries'
+import { lessonBinary } from './lessonBinary'
+import { lessonLinkedLists } from './lessonLinkedLists'
+import { lessonHtml } from './lessonHtml'
+import { lessonSql } from './lessonSql'
+import { lessonGit } from './lessonGit'
+import { lessonWhatIsMl } from './lessonWhatIsMl'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -96,6 +102,12 @@ export function registerCurriculum(): void {
     lessonLists,
     lessonStrings,
     lessonDictionaries,
+    lessonBinary,
+    lessonLinkedLists,
+    lessonHtml,
+    lessonSql,
+    lessonGit,
+    lessonWhatIsMl,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
