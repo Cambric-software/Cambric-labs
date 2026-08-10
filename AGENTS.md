@@ -37,55 +37,67 @@ The programming-education overhaul is IN PROGRESS. Verified working:
   blocks: paragraph/heading/code/codeWithOutput/callout/compare/steps,
   activities, animations, comprehension checks).
 - `loader.ts`: registry with eager stub index + lazy lesson loading.
-- `languages/registry.ts`: 13 languages registered.
-- `concepts/catalog.ts`: 46 concepts with prerequisite DAG + aliases.
-- `tracks/fundamentalsStructure.ts`: Programming Fundamentals track,
-  2 courses (Values/Control Flow, Functions & Data), 4 modules.
-- `lessons/`: 10 genuine lessons (variables-intro, variables-types,
+- `languages/registry.ts`: **38 languages** registered (14 analyzable).
+- `concepts/catalog.ts`: **147 concepts** with prerequisite DAG + aliases.
+- `tracks/`: **8 track structures** (foundations, DSA, web, backend,
+  systems, software-engineering, AI + the original NN track).
+- `lessons/`: **16 genuine lessons** (variables-intro, variables-types,
   conditionals, loops, boolean-operators, functions-intro, recursion,
-  lists, strings, dictionaries). Each has objectives, content blocks,
-  animation, activity, comprehension checks, compare block. Authored
-  for real educational depth — NOT templates.
+  lists, strings, dictionaries, binary-numbers, linked-lists, html-basics,
+  sql-fundamentals, git-fundamentals, what-is-ml). Each has objectives,
+  content blocks, animation, activity, comprehension checks, compare block.
+  Authored for real educational depth — NOT templates.
 - `validate.ts`: structural validation (dup IDs/titles, broken prereqs,
   concept-DAG cycle detection, track/course/module integrity, orphans).
-- `duplicateDetector.ts`: semantic duplicate detection via token Jaccard.
-- `qualityScorer.ts`: per-lesson 7-dimension quality scoring.
-- `learningStore.ts`: Zustand store (progress + short-session budget 5/10/15 min).
-- `components/`: LessonBlocks, AnimationRenderer, ActivityRenderer,
+- `duplicateDetector.ts`: semantic duplicate detection via token Jaccard
+  + title n-gram similarity (improved).
+- `qualityScorer.ts`: per-lesson **9-dimension** quality scoring
+  (added contentVariety + nonTemplateContent dimensions).
+- `learningStore.ts`: Zustand store (progress + mastery + short-session
+  budget 5/10/15 min + adaptive recommendation via recommendNextLesson).
+- `components/`: LessonBlocks, AnimationRenderer (step-through player with
+  play-all/reset/progress dots), ActivityRenderer (11 activity types with
+  real assertion evaluation: contains/notContains/regex/outputEquals),
   ComprehensionCheck (+ CSS modules), barrel index.ts.
 
 ### Curriculum UI
-- `pages/LearnPage.tsx`: curriculum browser + lesson viewer (replaces 12
-  hardcoded NN lessons). Session selector (Any/5/10/15 min).
+- `pages/LearnPage.tsx`: curriculum browser + lesson viewer. Session
+  selector (Any/5/10/15 min), recommended-next card, locked lessons
+  (prereq gating), "long" badge for lessons exceeding session budget.
 - `pages/ValidatePage.tsx` (`/cambric-labs/validate`, dev tooling): runs
-  validate + duplicateDetector + qualityScorer. Real run: 10 lessons,
-  0 structural errors, 0 duplicates, avg quality 99%.
+  validate + duplicateDetector + qualityScorer. Real run: 16 lessons,
+  0 structural errors, 0 duplicates, avg quality 99% (15 at 100%, 1 at 95%).
 
 ### Developer Area (frontend/src/devarea/)
-- Multi-language code analysis workspace. Analyzers (8 categories:
-  bugs, errors, gaps, suspicious, integrity, security, performance,
-  maintainability) for JS/TS/Python wired into a bounded engine.
-  - `analyzers/`: language-specific rule sets — JS/TS (8 rules: var,
-    eval, empty-catch, TODO, loose-equality, etc.), Python (7 rules:
-    bare-except, mutable-default-arg, eval, global, etc.), TypeScript
-    (3 rules: explicit-any, @ts-ignore, non-null assertion).
-  - `suggestions/`: refactor engine (e.g. string concat → template
-    literal), test generation (per-function jest-style stubs), and
-    `compare.ts` — bidirectional language comparison that translates
-    recognized idioms (function decl, list/dict literals, print) across
-    Python↔JS/TS to teach concept transfer.
-  - `pages/AdminPage.tsx`: editor + language selector + analysis
-    dashboard + findings + refactor + generated tests + language
-    comparison section (with target-language selector).
-  - Browser-verified: JS sample → 4 findings + 2 tests + Python
-    comparison (function decl js→py); Python sample → 6 findings + 3
-    tests; TS analyzer regexes verified standalone.
+- Multi-language code analysis workspace. **30 analyzers** across 8
+  categories (bugs, errors, gaps, suspicious, integrity, security,
+  performance, maintainability) for JS/TS/Python/SQL/HTML/CSS + 15
+  cross-language common analyzers covering all 14 analyzable languages.
+  - `analyzers/javascript.ts` (7 rules), `python.ts` (7), `typescript.ts` (3),
+    `sql.ts` (4: select-star, injection-risk, missing-where, destructive-no-where),
+    `htmlCss.ts` (4: img-needs-alt, inline-style, !important, empty-rule),
+    `common.ts` (5: hardcoded-secret, debug-print, todo-marker, long-line,
+    localhost-url — runs for all 14 analyzable languages).
+  - `suggestions/`: refactor engine, test generation (per-function stubs),
+    `compare.ts` (bidirectional language comparison), **`explain.ts`** (NEW:
+    code explanation engine — detects functions, infers purpose, produces
+    natural-language summary + per-function explanation blocks).
+  - `engine.ts`: analyzer registry + bounded run (one analyzer throwing
+    does not abort the whole run).
+  - `pages/AdminPage.tsx`: editor + language selector + analysis dashboard
+    + findings + code explanation + refactor + generated tests + language
+    comparison. Sample code for JS/TS/Python/SQL/HTML/CSS.
+  - **Tests**: vitest infrastructure (`vitest.config.ts`, `npm test`).
+    35 tests (20 engine + 15 suggestions) — all pass. Covers analyzer
+    positive/negative cases, throwing-analyzer resilience, refactor
+    patterns, test generation, language comparison, code explanation.
 
 ### Validation baseline
-- tsc --noEmit: exit 0. Vite build: exit 0 (~349KB JS, ~64KB CSS).
-- Curriculum validator (`/cambric-labs/validate`): 10 lessons, 46
-  concepts, 13 languages; 0 structural errors, 0 semantic duplicates,
-  avg quality 99% (9 of 10 lessons at 100%).
+- tsc --noEmit: exit 0. Vite build: exit 0 (~448KB JS, ~66KB CSS).
+- vitest: 35/35 pass (`cd frontend && npm test`).
+- Curriculum validator (`/cambric-labs/validate`): 16 lessons, 147
+  concepts, 38 languages; 0 structural errors, 0 semantic duplicates,
+  avg quality 99% (15 of 16 lessons at 100%, 1 at 95%).
 - Backend: 189 tests pass (neural engine untouched).
 
 ## Working conventions for this overhaul

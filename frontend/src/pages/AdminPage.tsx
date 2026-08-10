@@ -62,6 +62,19 @@ global cache
 cache = {}
 
 from utils import *`,
+  sql: `SELECT * FROM users;
+
+DELETE FROM orders;
+
+SELECT * FROM users WHERE name = ' + name + ';
+
+UPDATE products SET price = 0;`,
+  html: `<img src="logo.png">
+<div style="color: red;">Hello</div>
+<a href="#">Click</a>`,
+  css: `.box { color: red !important; }
+.empty {}
+.hidden { }`,
 }
 
 type TabId = 'analyze' | 'custom'
