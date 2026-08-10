@@ -110,6 +110,32 @@ export const lessonVariablesTypes: LessonDetail = {
       ],
     },
   ],
+  animation: {
+    type: 'dataFlow',
+    title: 'Tracing a type conversion',
+    steps: [
+      {
+        caption: 'Start with count = 7 (an int) and a string "items: ".',
+        highlightLines: [],
+      },
+      {
+        caption: 'Naive concat fails: "items: " + count mixes str and int. Python has no implicit conversion here, so this raises TypeError at runtime.',
+        highlightLines: [],
+      },
+      {
+        caption: 'Wrap count in str(): str(7) produces the string "7". Now both sides are strings.',
+        highlightLines: [],
+      },
+      {
+        caption: 'Concatenate: "items: " + "7" yields "items: 7".',
+        highlightLines: [],
+      },
+      {
+        caption: 'print("items: 7") outputs: items: 7. The conversion made the types agree before the operation.',
+        highlightLines: [],
+      },
+    ],
+  },
   activity: {
     type: 'codeChallenge',
     title: 'Fix the type mismatch',
