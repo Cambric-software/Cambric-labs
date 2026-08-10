@@ -52,7 +52,7 @@ const moduleControlFlow: CurriculumModule = {
   courseId: 'course-values-and-control-flow',
   title: 'Control Flow',
   summary: 'Conditionals, boolean logic, and loops.',
-  lessonIds: ['lesson-conditionals', 'lesson-loops'],
+  lessonIds: ['lesson-conditionals', 'lesson-loops', 'lesson-boolean-operators'],
 }
 
 const moduleFunctions: CurriculumModule = {

@@ -112,6 +112,20 @@ export const CONCEPTS: Concept[] = [
     aliases: ['logical operators'],
   },
   {
+    id: 'short-circuit',
+    title: 'Short-Circuit Evaluation',
+    summary: 'When and/or stop early once the result is determined.',
+    prerequisiteConceptIds: ['boolean-logic'],
+    aliases: ['lazy evaluation', 'short-circuiting'],
+  },
+  {
+    id: 'truthiness',
+    title: 'Truthiness',
+    summary: 'How non-boolean values are coerced to true/false in conditions.',
+    prerequisiteConceptIds: ['boolean-logic'],
+    aliases: ['falsy', 'truthy'],
+  },
+  {
     id: 'loop',
     title: 'Loop',
     summary: 'Repeating a block of code while a condition holds.',
