@@ -508,3 +508,226 @@
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
+
+/* === New curriculum browser + lesson viewer styles === */
+
+.sessionRow {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--lab-space-3);
+}
+
+.sessionLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-1);
+  font-size: var(--lab-text-xs);
+  color: var(--lab-text-secondary);
+  text-transform: uppercase;
+}
+
+.sessionBtn {
+  background: var(--lab-bg-tertiary);
+  color: var(--lab-text-secondary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-1) var(--lab-space-3);
+  font-size: var(--lab-text-xs);
+  cursor: pointer;
+  font-family: var(--lab-font-mono);
+}
+
+.sessionActive {
+  background: var(--lab-accent-blue);
+  color: var(--lab-bg-primary);
+  border-color: var(--lab-accent-blue);
+}
+
+.recommended {
+  margin: var(--lab-space-6) 0;
+}
+
+.recommendedHead {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  color: var(--lab-accent-cyan);
+  font-size: var(--lab-text-sm);
+  margin-bottom: var(--lab-space-2);
+}
+
+.recommendedCard {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-3);
+  padding: var(--lab-space-4);
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-accent-cyan);
+  border-radius: var(--lab-radius-md);
+  text-decoration: none;
+  color: var(--lab-text-primary);
+  transition: transform var(--lab-transition-base);
+}
+
+.recommendedCard:hover {
+  transform: translateY(-2px);
+}
+
+.track {
+  border-left: 3px solid var(--lab-accent-blue);
+  padding-left: var(--lab-space-4);
+  margin-bottom: var(--lab-space-8);
+}
+
+.trackTitle {
+  font-size: var(--lab-text-xl);
+  font-weight: 700;
+  margin: 0 0 var(--lab-space-1);
+}
+
+.trackSummary {
+  color: var(--lab-text-secondary);
+  font-size: var(--lab-text-sm);
+  margin: 0 0 var(--lab-space-4);
+}
+
+.courseList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-3);
+}
+
+.course {
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-md);
+  overflow: hidden;
+}
+
+.courseHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  padding: var(--lab-space-3) var(--lab-space-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--lab-text-primary);
+}
+
+.courseHead:hover {
+  background: var(--lab-bg-tertiary);
+}
+
+.courseTitle {
+  font-size: var(--lab-text-md);
+  font-weight: 600;
+}
+
+.courseSummary {
+  font-size: var(--lab-text-sm);
+  color: var(--lab-text-secondary);
+  flex: 1;
+}
+
+.moduleList {
+  padding: 0 var(--lab-space-2) var(--lab-space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-3);
+}
+
+.module {
+  padding: var(--lab-space-2);
+}
+
+.moduleHead {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  color: var(--lab-accent-purple);
+  font-size: var(--lab-text-sm);
+  font-weight: 600;
+  margin-bottom: var(--lab-space-2);
+  padding-left: var(--lab-space-2);
+}
+
+.locked {
+  opacity: 0.55;
+}
+
+.tooLong {
+  opacity: 0.7;
+}
+
+.tooLongBadge {
+  background: var(--lab-accent-orange);
+  color: var(--lab-bg-primary);
+  border-radius: 999px;
+  padding: 0 var(--lab-space-2);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.lessonMetaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  flex-wrap: wrap;
+  margin-top: var(--lab-space-1);
+}
+
+.langBadge {
+  background: var(--lab-bg-tertiary);
+  color: var(--lab-accent-cyan);
+  border-radius: var(--lab-radius-sm);
+  padding: 2px var(--lab-space-2);
+  font-size: var(--lab-text-xs);
+  font-family: var(--lab-font-mono);
+}
+
+.difficultyBadge {
+  color: var(--lab-text-muted);
+  font-size: var(--lab-text-xs);
+}
+
+.objectivesBox {
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-border);
+  border-left: 3px solid var(--lab-accent-green);
+  border-radius: var(--lab-radius-md);
+  padding: var(--lab-space-4);
+  margin-bottom: var(--lab-space-4);
+}
+
+.objectivesBox h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  font-size: var(--lab-text-md);
+  color: var(--lab-accent-green);
+  margin: 0 0 var(--lab-space-2);
+}
+
+.objectivesBox ul {
+  margin: 0;
+  padding-left: var(--lab-space-6);
+  color: var(--lab-text-secondary);
+  line-height: 1.6;
+}
+
+.sectionSpacing {
+  margin-top: var(--lab-space-6);
+}
+
+.loading {
+  color: var(--lab-text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: var(--lab-space-8);
+}

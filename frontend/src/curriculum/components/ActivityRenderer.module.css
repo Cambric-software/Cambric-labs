@@ -1,0 +1,209 @@
+.wrapper {
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-md);
+  padding: var(--lab-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-3);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  font-size: var(--lab-text-md);
+  color: var(--lab-accent-cyan);
+  margin: 0;
+}
+
+.prompt {
+  color: var(--lab-text-secondary);
+  font-size: var(--lab-text-sm);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.codeBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-1);
+}
+
+.codeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-xs);
+  color: var(--lab-text-muted);
+}
+
+.codeEditor {
+  background: var(--lab-bg-primary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-3);
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-sm);
+  color: var(--lab-text-primary);
+  resize: vertical;
+  outline: none;
+  line-height: 1.5;
+}
+
+.codeEditor:focus {
+  border-color: var(--lab-accent-blue);
+}
+
+.runBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-1);
+  background: var(--lab-accent-blue);
+  color: var(--lab-bg-primary);
+  border: none;
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-1) var(--lab-space-3);
+  font-size: var(--lab-text-xs);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.runBtn:hover {
+  background: var(--lab-accent-cyan);
+}
+
+.runBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-1);
+}
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  font-size: var(--lab-text-sm);
+}
+
+.pass {
+  color: var(--lab-accent-green);
+  flex-shrink: 0;
+}
+
+.fail {
+  color: var(--lab-accent-red);
+  flex-shrink: 0;
+}
+
+.passText {
+  color: var(--lab-accent-green);
+}
+
+.failText {
+  color: var(--lab-text-secondary);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-2);
+}
+
+.option {
+  text-align: left;
+  background: var(--lab-bg-primary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-3);
+  color: var(--lab-text-primary);
+  cursor: pointer;
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-sm);
+  transition: border-color var(--lab-transition-base);
+}
+
+.option:hover:not(:disabled) {
+  border-color: var(--lab-accent-blue);
+}
+
+.optionSelected {
+  border-color: var(--lab-accent-cyan);
+}
+
+.optionCorrect {
+  border-color: var(--lab-accent-green) !important;
+  background: rgba(63, 185, 80, 0.1);
+}
+
+.optionWrong {
+  border-color: var(--lab-accent-red) !important;
+  background: rgba(248, 81, 73, 0.1);
+}
+
+.feedback {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  padding: var(--lab-space-2) var(--lab-space-3);
+  border-radius: var(--lab-radius-sm);
+  font-size: var(--lab-text-sm);
+  flex-wrap: wrap;
+}
+
+.feedbackCorrect {
+  background: rgba(63, 185, 80, 0.1);
+  color: var(--lab-accent-green);
+}
+
+.feedbackWrong {
+  background: rgba(248, 81, 73, 0.1);
+  color: var(--lab-accent-red);
+}
+
+.explanation {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-1);
+  color: var(--lab-text-secondary);
+  font-size: var(--lab-text-xs);
+  margin-left: var(--lab-space-2);
+}
+
+.fillRow {
+  display: flex;
+  gap: var(--lab-space-2);
+}
+
+.fillInput {
+  flex: 1;
+  background: var(--lab-bg-primary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-2) var(--lab-space-3);
+  color: var(--lab-text-primary);
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-sm);
+  outline: none;
+}
+
+.fillInput:focus {
+  border-color: var(--lab-accent-blue);
+}
+
+.comingSoon {
+  color: var(--lab-text-muted);
+  font-size: var(--lab-text-sm);
+  font-style: italic;
+  margin: 0;
+}

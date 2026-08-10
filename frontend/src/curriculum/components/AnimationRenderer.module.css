@@ -1,0 +1,113 @@
+.player {
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-md);
+  padding: var(--lab-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-3);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: var(--lab-text-md);
+  font-weight: 600;
+  color: var(--lab-text-primary);
+}
+
+.counter {
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-xs);
+  color: var(--lab-text-muted);
+}
+
+.stage {
+  background: var(--lab-bg-primary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-4);
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lab-space-2);
+}
+
+.caption {
+  color: var(--lab-text-primary);
+  line-height: 1.6;
+  font-size: var(--lab-text-sm);
+}
+
+.highlight {
+  display: flex;
+  gap: var(--lab-space-2);
+  align-items: center;
+  font-size: var(--lab-text-xs);
+}
+
+.highlightLabel {
+  color: var(--lab-text-muted);
+}
+
+.highlightNums {
+  font-family: var(--lab-font-mono);
+  color: var(--lab-accent-orange);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+}
+
+.ctrlBtn {
+  background: var(--lab-bg-tertiary);
+  color: var(--lab-text-primary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-sm);
+  padding: var(--lab-space-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background var(--lab-transition-base), border-color var(--lab-transition-base);
+}
+
+.ctrlBtn:hover:not(:disabled) {
+  background: var(--lab-accent-blue);
+  border-color: var(--lab-accent-blue);
+}
+
+.ctrlBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.progress {
+  display: flex;
+  gap: var(--lab-space-1);
+  margin-left: var(--lab-space-2);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lab-bg-tertiary);
+  border: 1px solid var(--lab-border);
+}
+
+.dotDone {
+  background: var(--lab-accent-blue);
+  border-color: var(--lab-accent-blue);
+}
+
+.dotActive {
+  background: var(--lab-accent-cyan);
+  border-color: var(--lab-accent-cyan);
+  transform: scale(1.3);
+}
