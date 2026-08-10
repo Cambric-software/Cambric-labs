@@ -102,6 +102,7 @@ export function ValidatePage() {
           <div className={styles.statRow}>
             <Stat label="Near-duplicates (≥0.85)" value={dups.nearDuplicates} tone={dups.nearDuplicates > 0 ? 'bad' : 'good'} />
             <Stat label="Suspicious (0.6–0.85)" value={dups.suspicious} tone={dups.suspicious > 0 ? 'warn' : 'good'} />
+            <Stat label="Title near-duplicates" value={dups.titleNearDuplicates} tone={dups.titleNearDuplicates > 0 ? 'warn' : 'good'} />
             <Stat label="Pairs flagged" value={dups.pairs.length} tone="neutral" />
           </div>
           {dups.pairs.length > 0 && (

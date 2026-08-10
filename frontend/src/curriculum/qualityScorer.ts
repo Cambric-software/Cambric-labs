@@ -9,6 +9,8 @@
  *   - hasComprehension: at least one comprehension check.
  *   - hasCodeExamples: contains at least one code block with real code.
  *   - hasCompareBlock: a cross-language comparison block (reinforces transfer).
+ *   - contentVariety: uses multiple block types (not just walls of paragraphs).
+ *   - nonTemplateContent: body is not a shallow restatement of the title/summary.
  *   - explanationDepth: heuristic on explanation length vs. title complexity.
  *
  * Each dimension yields 0..1; the composite score is a weighted sum. The
@@ -31,19 +33,20 @@ export interface QualityReport {
 }
 
 const WEIGHTS: Record<string, number> = {
-  objectivesCoverage: 0.25,
-  hasActivity: 0.2,
-  hasComprehension: 0.15,
-  hasCodeExamples: 0.2,
-  hasAnimation: 0.1,
+  objectivesCoverage: 0.2,
+  hasActivity: 0.15,
+  hasComprehension: 0.12,
+  hasCodeExamples: 0.15,
+  hasAnimation: 0.08,
   hasCompareBlock: 0.05,
+  contentVariety: 0.1,
+  nonTemplateContent: 0.1,
   explanationDepth: 0.05,
 }
 
 export function scoreLesson(lesson: LessonDetail): QualityReport {
   const dims: QualityDimension[] = []
 
-  // Objectives coverage: does the content mention keywords from each objective?
   const text = collectText(lesson.content).toLowerCase()
   const objectivesCovered = lesson.objectives.filter((obj) =>
     keywordOverlap(obj.toLowerCase(), text),
@@ -100,6 +103,33 @@ export function scoreLesson(lesson: LessonDetail): QualityReport {
     detail: hasCompare ? 'Present' : 'Missing',
   })
 
+  // Content variety: does the lesson use multiple block types, or is it a
+  // wall of paragraphs? A genuinely educational lesson mixes paragraphs,
+  // headings, code, callouts, and steps.
+  const blockTypes = new Set(lesson.content.map((b) => b.kind))
+  const varietyScore = Math.min(1, blockTypes.size / 4)
+  dims.push({
+    key: 'contentVariety',
+    label: 'Content variety (block types)',
+    score: varietyScore,
+    detail: `${blockTypes.size} distinct block type(s): ${[...blockTypes].join(', ')}`,
+  })
+
+  // Non-template content: the body must contain substantial text that is NOT
+  // just a restatement of the title/summary. We tokenize title+summary, then
+  // check how many body tokens are OUTSIDE that set. A lesson that only
+  // repeats its own summary is a template, not content.
+  const headTokens = tokenize(`${lesson.title} ${lesson.summary}`)
+  const bodyTokens = tokenize(text)
+  const novelBodyTokens = [...bodyTokens].filter((t) => !headTokens.has(t))
+  const novelRatio = bodyTokens.size === 0 ? 0 : novelBodyTokens.length / bodyTokens.size
+  dims.push({
+    key: 'nonTemplateContent',
+    label: 'Non-template body content',
+    score: novelRatio >= 0.5 ? 1 : novelRatio >= 0.3 ? 0.5 : 0,
+    detail: `${Math.round(novelRatio * 100)}% of body tokens are novel (not in title/summary)`,
+  })
+
   // Explanation depth: ratio of explanation words to title words. A real
   // lesson explains more than it titles.
   const titleWords = lesson.title.split(/\s+/).length
@@ -119,6 +149,11 @@ export function scoreLesson(lesson: LessonDetail): QualityReport {
     composite: Math.round(composite * 100) / 100,
     dimensions: dims,
   }
+}
+
+function tokenize(text: string): Set<string> {
+  const words = text.toLowerCase().match(/[a-z0-9]{3,}/g) ?? []
+  return new Set(words)
 }
 
 function collectText(blocks: LessonBlock[]): string {

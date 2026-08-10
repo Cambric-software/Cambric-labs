@@ -31,6 +31,8 @@ export interface DuplicateResult {
   nearDuplicates: number
   /** Pairs in 0.6..0.85 — likely related/overlapping, worth a human look. */
   suspicious: number
+  /** Lessons whose TITLES are near-identical (template inflation signal). */
+  titleNearDuplicates: number
 }
 
 const STOPWORDS = new Set([
@@ -73,6 +75,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 interface Fingerprinted {
   stub: LessonStub
   tokens: Set<string>
+  titleTokens: Set<string>
 }
 
 export function detectSemanticDuplicates(
@@ -80,18 +83,17 @@ export function detectSemanticDuplicates(
   threshold: number = SUSPICIOUS_THRESHOLD,
 ): DuplicateResult {
   const stubs = Object.values(registry.lessonIndex)
-  if (stubs.length < 2) return { pairs: [], nearDuplicates: 0, suspicious: 0 }
+  if (stubs.length < 2) return { pairs: [], nearDuplicates: 0, suspicious: 0, titleNearDuplicates: 0 }
 
   const fingerprinted: Fingerprinted[] = stubs.map((stub) => ({
     stub,
     tokens: tokenize(`${stub.title} ${stub.summary}`),
+    titleTokens: tokenize(stub.title),
   }))
 
   const pairs: DuplicatePair[] = []
+  let titleNearDuplicates = 0
 
-  // Bounded pairwise comparison. For curricula exceeding MAX_PAIRWISE lessons,
-  // a production system would use MinHash/LSH; for our scale this is fine and
-  // keeps the implementation honest (no silent false-negative buckets).
   for (let i = 0; i < fingerprinted.length; i++) {
     for (let j = i + 1; j < fingerprinted.length; j++) {
       const sim = jaccard(fingerprinted[i].tokens, fingerprinted[j].tokens)
@@ -104,6 +106,11 @@ export function detectSemanticDuplicates(
           similarity: Math.round(sim * 100) / 100,
         })
       }
+      // Title-only similarity: catches the "Python X — Fundamentals /
+      // Java X — Fundamentals" template-inflation pattern where the BODY
+      // may differ but the TITLES are near-identical.
+      const titleSim = jaccard(fingerprinted[i].titleTokens, fingerprinted[j].titleTokens)
+      if (titleSim >= NEAR_THRESHOLD) titleNearDuplicates++
     }
   }
 
@@ -112,5 +119,6 @@ export function detectSemanticDuplicates(
     pairs,
     nearDuplicates: pairs.filter((p) => p.similarity >= NEAR_THRESHOLD).length,
     suspicious: pairs.filter((p) => p.similarity >= SUSPICIOUS_THRESHOLD && p.similarity < NEAR_THRESHOLD).length,
+    titleNearDuplicates,
   }
 }
