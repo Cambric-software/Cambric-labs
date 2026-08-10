@@ -23,6 +23,7 @@ import { lessonConditionals } from './lessonConditionals'
 import { lessonLoops } from './lessonLoops'
 import { lessonBooleanOperators } from './lessonBooleanOperators'
 import { lessonFunctionsIntro } from './lessonFunctionsIntro'
+import { lessonRecursion } from './lessonRecursion'
 import { lessonLists } from './lessonLists'
 import { lessonStrings } from './lessonStrings'
 import { lessonDictionaries } from './lessonDictionaries'
@@ -77,6 +78,7 @@ export function registerCurriculum(): void {
     lessonLoops,
     lessonBooleanOperators,
     lessonFunctionsIntro,
+    lessonRecursion,
     lessonLists,
     lessonStrings,
     lessonDictionaries,

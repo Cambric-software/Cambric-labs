@@ -182,6 +182,13 @@ export const CONCEPTS: Concept[] = [
     aliases: ['self-reference'],
   },
   {
+    id: 'base-case',
+    title: 'Base Case',
+    summary: 'The stopping condition that prevents infinite recursion.',
+    prerequisiteConceptIds: ['recursion', 'conditional'],
+    aliases: ['terminating case'],
+  },
+  {
     id: 'mutation',
     title: 'Mutation',
     summary: 'Changing a value or data structure in place.',

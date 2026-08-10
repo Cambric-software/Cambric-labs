@@ -60,7 +60,7 @@ const moduleFunctions: CurriculumModule = {
   courseId: 'course-functions-and-data',
   title: 'Functions',
   summary: 'Reusable, named blocks that take inputs and return results.',
-  lessonIds: ['lesson-functions-intro'],
+  lessonIds: ['lesson-functions-intro', 'lesson-recursion'],
 }
 
 const moduleCollections: CurriculumModule = {
