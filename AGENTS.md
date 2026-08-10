@@ -38,13 +38,14 @@ The programming-education overhaul is IN PROGRESS. Verified working:
   activities, animations, comprehension checks).
 - `loader.ts`: registry with eager stub index + lazy lesson loading.
 - `languages/registry.ts`: 13 languages registered.
-- `concepts/catalog.ts`: 43 concepts with prerequisite DAG + aliases.
+- `concepts/catalog.ts`: 46 concepts with prerequisite DAG + aliases.
 - `tracks/fundamentalsStructure.ts`: Programming Fundamentals track,
   2 courses (Values/Control Flow, Functions & Data), 4 modules.
-- `lessons/`: 8 genuine lessons (variables-intro, variables-types,
-  conditionals, loops, functions-intro, lists, strings, dictionaries).
-  Each has objectives, content blocks, animation, activity, comprehension
-  checks, compare block. Authored for real educational depth — NOT templates.
+- `lessons/`: 10 genuine lessons (variables-intro, variables-types,
+  conditionals, loops, boolean-operators, functions-intro, recursion,
+  lists, strings, dictionaries). Each has objectives, content blocks,
+  animation, activity, comprehension checks, compare block. Authored
+  for real educational depth — NOT templates.
 - `validate.ts`: structural validation (dup IDs/titles, broken prereqs,
   concept-DAG cycle detection, track/course/module integrity, orphans).
 - `duplicateDetector.ts`: semantic duplicate detection via token Jaccard.
@@ -57,16 +58,34 @@ The programming-education overhaul is IN PROGRESS. Verified working:
 - `pages/LearnPage.tsx`: curriculum browser + lesson viewer (replaces 12
   hardcoded NN lessons). Session selector (Any/5/10/15 min).
 - `pages/ValidatePage.tsx` (`/cambric-labs/validate`, dev tooling): runs
-  validate + duplicateDetector + qualityScorer. Real run: 8 lessons,
+  validate + duplicateDetector + qualityScorer. Real run: 10 lessons,
   0 structural errors, 0 duplicates, avg quality 99%.
 
 ### Developer Area (frontend/src/devarea/)
-- Multi-language code analysis workspace. Analyzers for JS/TS/Python wired
-  into engine. `pages/AdminPage.tsx` (399 lines) renders expandable findings
-  (bugs, gaps, security). Browser-tested: detects empty catch, var, eval, TODO.
+- Multi-language code analysis workspace. Analyzers (8 categories:
+  bugs, errors, gaps, suspicious, integrity, security, performance,
+  maintainability) for JS/TS/Python wired into a bounded engine.
+  - `analyzers/`: language-specific rule sets — JS/TS (8 rules: var,
+    eval, empty-catch, TODO, loose-equality, etc.), Python (7 rules:
+    bare-except, mutable-default-arg, eval, global, etc.), TypeScript
+    (3 rules: explicit-any, @ts-ignore, non-null assertion).
+  - `suggestions/`: refactor engine (e.g. string concat → template
+    literal), test generation (per-function jest-style stubs), and
+    `compare.ts` — bidirectional language comparison that translates
+    recognized idioms (function decl, list/dict literals, print) across
+    Python↔JS/TS to teach concept transfer.
+  - `pages/AdminPage.tsx`: editor + language selector + analysis
+    dashboard + findings + refactor + generated tests + language
+    comparison section (with target-language selector).
+  - Browser-verified: JS sample → 4 findings + 2 tests + Python
+    comparison (function decl js→py); Python sample → 6 findings + 3
+    tests; TS analyzer regexes verified standalone.
 
 ### Validation baseline
-- tsc --noEmit: exit 0. Vite build: exit 0 (1424 modules, ~327KB JS).
+- tsc --noEmit: exit 0. Vite build: exit 0 (~349KB JS, ~64KB CSS).
+- Curriculum validator (`/cambric-labs/validate`): 10 lessons, 46
+  concepts, 13 languages; 0 structural errors, 0 semantic duplicates,
+  avg quality 99% (9 of 10 lessons at 100%).
 - Backend: 189 tests pass (neural engine untouched).
 
 ## Working conventions for this overhaul
