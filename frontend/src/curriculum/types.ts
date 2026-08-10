@@ -34,7 +34,22 @@ export interface LanguageSpec {
   analyzable: boolean
   /** Difficulty ramp 1-5 for an absolute beginner. */
   beginnerDifficulty: 1 | 2 | 3 | 4 | 5
+  /** Coarse category for grouping in the curriculum browser. */
+  category: LanguageCategory
 }
+
+/** Coarse grouping for the language browser (markup/query are taught but not "programming languages" in the strict sense). */
+export type LanguageCategory =
+  | 'general' // general-purpose programming languages
+  | 'systems' // C, C++, Rust, Assembly
+  | 'mobile' // Swift, Dart
+  | 'data' // R, MATLAB, Julia
+  | 'shell' // Bash, PowerShell
+  | 'query' // SQL
+  | 'markup' // HTML, CSS
+  | 'specialized' // Solidity, GDScript
+  | 'legacy' // Fortran, COBOL
+  | 'notation' // Pseudocode
 
 export type Paradigm =
   | 'imperative'
@@ -152,12 +167,20 @@ export interface ActivityDescriptor {
 }
 
 export type ActivityType =
-  | 'codeChallenge'
-  | 'fillBlank'
-  | 'ordering'
-  | 'matching'
-  | 'predictOutput'
-  | 'sandbox'
+  | 'codeChallenge' // write code that satisfies checks
+  | 'fillBlank' // complete a partial code snippet
+  | 'ordering' // reorder shuffled steps into the correct sequence
+  | 'matching' // match items from two columns
+  | 'predictOutput' // predict what code prints
+  | 'sandbox' // free-form code experimentation
+  | 'fixCode' // repair broken/buggy code so checks pass
+  | 'findBug' // identify which line contains the bug
+  | 'completeCode' // fill in a missing piece to reach a goal
+  | 'traceExecution' // step through code and report variable state
+  | 'multipleChoice' // concept / "which is better" question
+  | 'spotBadPractice' // identify the problematic pattern
+  | 'compareImplementations' // judge which solution is better and why
+  | 'codeReview' // review a snippet for issues
 
 export interface ActivityCheck {
   /** Human description of what the check verifies. */
@@ -182,11 +205,16 @@ export interface AnimationDescriptor {
 }
 
 export type AnimationType =
-  | 'codeWalk'
-  | 'memoryDiagram'
-  | 'dataFlow'
-  | 'callStack'
-  | 'timeline'
+  | 'codeWalk' // step through code lines with highlights
+  | 'memoryDiagram' // boxes/values in memory (stack vs heap)
+  | 'dataFlow' // values flowing through expressions
+  | 'callStack' // frames pushing/popping
+  | 'timeline' // sequential events over time
+  | 'sorting' // array elements rearranging during a sort
+  | 'treeTraversal' // visiting nodes of a tree
+  | 'graphTraversal' // visiting nodes of a graph (BFS/DFS)
+  | 'eventLoop' // task queue / microtask / call stack interplay
+  | 'asyncFlow' // promise / async-await resolution order
 
 export interface AnimationStep {
   caption: string
@@ -203,6 +231,42 @@ export interface ComprehensionCheck {
   correctIndex: number
   /** Why the correct answer is correct, shown after answering. */
   explanation: string
+}
+
+/**
+ * A project learners build incrementally. Each milestone combines
+ * previously learned concepts and ends with a checkpoint. Projects live
+ * in tracks alongside lessons; the registry keeps stub metadata only
+ * and loads milestone detail lazily.
+ */
+export interface Project {
+  id: string
+  title: string
+  trackId: string
+  /** Primary language for the project's code. */
+  languageId: string
+  summary: string
+  /** Concept ids the project exercises (cumulative). */
+  usesConceptIds: string[]
+  /** Concept ids the learner should know before starting. */
+  prerequisiteConceptIds: string[]
+  difficulty: 1 | 2 | 3 | 4 | 5
+  estimatedHours: number
+  /** Ordered milestones; each is a self-contained checkpoint. */
+  milestones: ProjectMilestone[]
+}
+
+/** One checkpoint within a project. */
+export interface ProjectMilestone {
+  id: string
+  title: string
+  goal: string
+  /** Concept ids this milestone introduces or applies. */
+  conceptIds: string[]
+  /** Hints revealed one at a time, not all at once. */
+  hints: string[]
+  /** A check confirming the milestone is reached. */
+  check?: ActivityCheck
 }
 
 /**
@@ -229,6 +293,8 @@ export interface CurriculumRegistry {
   concepts: Record<string, Concept>
   /** Lessons are keyed by id for O(1) lookup; loaded lazily by module. */
   lessonIndex: Record<string, LessonStub>
+  /** Projects keyed by id (stubs only; milestone detail lives in the project). */
+  projects?: Record<string, Project>
 }
 
 /** Lightweight lesson metadata kept in memory; full content loaded on demand. */
