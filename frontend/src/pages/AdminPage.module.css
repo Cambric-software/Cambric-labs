@@ -601,3 +601,26 @@
   gap: var(--lab-space-3);
   margin-bottom: var(--lab-space-3);
 }
+
+.explainBox {
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius);
+  padding: var(--lab-space-3);
+  margin-bottom: var(--lab-space-4);
+  background: var(--lab-surface-2);
+}
+
+.explainSummary {
+  font-size: var(--lab-text-sm);
+  color: var(--lab-text-secondary);
+  margin-bottom: var(--lab-space-3);
+  font-style: italic;
+}
+
+.explainBlock {
+  margin-bottom: var(--lab-space-3);
+}
+
+.explainBlock:last-child {
+  margin-bottom: 0;
+}

@@ -174,36 +174,6 @@ const evalAnalyzer: Analyzer = {
 }
 
 /**
- * TODO / FIXME / XXX markers. Flagged 'gap' — they signal incomplete work.
- */
-const todoAnalyzer: Analyzer = {
-  id: 'js-todo',
-  label: 'Unfinished work markers',
-  category: 'gap',
-  supportedLanguages: ['javascript', 'typescript'],
-  analyze({ code }: AnalysisInput): Finding[] {
-    const findings: Finding[] = []
-    const regex = /\b(TODO|FIXME|XXX|HACK)\b/g
-    let match: RegExpExecArray | null
-    while ((match = regex.exec(code)) !== null) {
-      const line = lineOf(code, match.index)
-      findings.push({
-        ruleId: 'js-todo',
-        category: 'gap',
-        severity: 'low',
-        message: `Unfinished work marker: ${match[0]}.`,
-        range: rangeFor(line, match.index, match[0].length),
-        explanation:
-          'These markers flag known-incomplete or risky code. Track them so ' +
-          'they are resolved rather than forgotten.',
-        suggestion: { title: 'Resolve or file a tracking issue' },
-      })
-    }
-    return findings
-  },
-}
-
-/**
  * Empty catch blocks. Swallowing errors silently makes bugs invisible.
  * Flagged 'bug' because it actively hides failures.
  */
@@ -307,7 +277,6 @@ export const JAVASCRIPT_ANALYZERS: Analyzer[] = [
   varAnalyzer,
   debuggerAnalyzer,
   evalAnalyzer,
-  todoAnalyzer,
   emptyCatchAnalyzer,
   documentWriteAnalyzer,
   looseUndefinedAnalyzer,

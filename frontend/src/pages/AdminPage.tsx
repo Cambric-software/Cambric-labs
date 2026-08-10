@@ -2,13 +2,14 @@ import { useMemo, useState } from 'react'
 import {
   Code2, Play, AlertTriangle, Bug, ShieldAlert, Gauge, Wrench,
   FlaskConical, FileCode, Lightbulb, Beaker, ChevronDown, ChevronRight,
+  BookOpen,
 } from 'lucide-react'
 import {
   registerDevAreaAnalyzers, runAnalysis, flattenFindings, summarizeByCategory,
-  suggestRefactors, generateTests, comparisonSuggestions,
+  suggestRefactors, generateTests, comparisonSuggestions, explainCode,
 } from '../devarea'
 import { listLanguages } from '../curriculum'
-import type { Finding, FindingCategory, RefactorSuggestion, GeneratedTest } from '../devarea'
+import type { Finding, FindingCategory, RefactorSuggestion, GeneratedTest, CodeExplanation } from '../devarea'
 import styles from './AdminPage.module.css'
 
 // Wire built-in analyzers into the engine once at module load.
@@ -118,6 +119,10 @@ export function AdminPage() {
     },
     [hasRun, code, languageId, compareTarget, languages],
   )
+  const explanation = useMemo(
+    () => (hasRun ? explainCode({ code, languageId }) : null),
+    [hasRun, code, languageId],
+  )
 
   const onSelectLanguage = (id: string) => {
     setLanguageId(id)
@@ -169,6 +174,7 @@ export function AdminPage() {
               refactors={refactors}
               tests={tests}
               comparisons={comparisons}
+              explanation={explanation}
               compareTarget={compareTarget}
               onSelectCompareTarget={setCompareTarget}
               onSelectLanguage={onSelectLanguage}
@@ -204,6 +210,7 @@ interface AnalysisWorkspaceProps {
   refactors: RefactorSuggestion[]
   tests: GeneratedTest[]
   comparisons: RefactorSuggestion[]
+  explanation: CodeExplanation | null
   compareTarget: string
   onSelectCompareTarget: (id: string) => void
   onSelectLanguage: (id: string) => void
@@ -215,7 +222,7 @@ interface AnalysisWorkspaceProps {
 function AnalysisWorkspace(props: AnalysisWorkspaceProps) {
   const {
     languageId, languages, code, hasRun, findings, summary, refactors, tests,
-    comparisons, compareTarget, onSelectCompareTarget,
+    comparisons, explanation, compareTarget, onSelectCompareTarget,
     onSelectLanguage, onLoadSample, onCodeChange, onRun,
   } = props
   const totalFindings = findings.length
@@ -284,6 +291,26 @@ function AnalysisWorkspace(props: AnalysisWorkspaceProps) {
                 <FindingRow key={`${f.ruleId}-${i}`} finding={f} />
               ))}
             </ul>
+          )}
+
+          <h3 className={styles.sectionTitle}>
+            <BookOpen size={18} /> Code Explanation
+          </h3>
+          {explanation ? (
+            <div className={styles.explainBox}>
+              <p className={styles.explainSummary}>{explanation.summary}</p>
+              {explanation.blocks.map((blk, i) => (
+                <div key={i} className={styles.explainBlock}>
+                  <div className={styles.refactorHead}>{blk.heading}</div>
+                  <p className={styles.refactorRationale}>{blk.text}</p>
+                  {blk.excerpt && (
+                    <pre className={styles.snippet}><code>{blk.excerpt}</code></pre>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.empty}>No explanation available.</p>
           )}
 
           <h3 className={styles.sectionTitle}>
