@@ -13,6 +13,13 @@
 import { registerModuleLoader, registerModuleStubs } from '../loader'
 import type { LessonDetail, LessonStub } from '../types'
 import { registerFundamentalsStructure } from '../tracks/fundamentalsStructure'
+import { registerFoundationsStructure } from '../tracks/foundationsStructure'
+import { registerDsaStructure } from '../tracks/dsaStructure'
+import { registerWebStructure } from '../tracks/webStructure'
+import { registerBackendStructure } from '../tracks/backendStructure'
+import { registerSystemsStructure } from '../tracks/systemsStructure'
+import { registerSeStructure } from '../tracks/seStructure'
+import { registerAiStructure } from '../tracks/aiStructure'
 
 // Lesson module imports (full content). These are statically imported only
 // to derive stubs + to power the loader; the loader itself can swap to
@@ -70,6 +77,13 @@ function registerLoader(moduleId: string, lessons: LessonDetail[]): void {
 
 export function registerCurriculum(): void {
   registerFundamentalsStructure()
+  registerFoundationsStructure()
+  registerDsaStructure()
+  registerWebStructure()
+  registerBackendStructure()
+  registerSystemsStructure()
+  registerSeStructure()
+  registerAiStructure()
 
   const allLessons: LessonDetail[] = [
     lessonVariablesIntro,
