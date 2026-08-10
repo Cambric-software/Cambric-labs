@@ -36,7 +36,7 @@ const functionsAndData: Course = {
   trackId: FUNDAMENTALS_TRACK_ID,
   title: 'Functions & Data Structures',
   summary: 'Reusable logic and the structures that hold your data.',
-  moduleIds: ['module-functions'],
+  moduleIds: ['module-functions', 'module-collections'],
 }
 
 const moduleVariables: CurriculumModule = {
@@ -63,6 +63,14 @@ const moduleFunctions: CurriculumModule = {
   lessonIds: ['lesson-functions-intro'],
 }
 
+const moduleCollections: CurriculumModule = {
+  id: 'module-collections',
+  courseId: 'course-functions-and-data',
+  title: 'Collections',
+  summary: 'Lists, strings, and maps — the structures that hold many values.',
+  lessonIds: ['lesson-lists', 'lesson-strings', 'lesson-dictionaries'],
+}
+
 export function registerFundamentalsStructure(): void {
   registerTrackStructure(fundamentalsTrack)
   registerCourseStructure(valuesAndControlFlow)
@@ -70,6 +78,7 @@ export function registerFundamentalsStructure(): void {
   registerModuleStructure(moduleVariables)
   registerModuleStructure(moduleControlFlow)
   registerModuleStructure(moduleFunctions)
+  registerModuleStructure(moduleCollections)
 }
 
 export const FUNDAMENTALS_LESSON_IDS = {
@@ -78,4 +87,7 @@ export const FUNDAMENTALS_LESSON_IDS = {
   conditionals: 'lesson-conditionals',
   loops: 'lesson-loops',
   functionsIntro: 'lesson-functions-intro',
+  lists: 'lesson-lists',
+  strings: 'lesson-strings',
+  dictionaries: 'lesson-dictionaries',
 } as const

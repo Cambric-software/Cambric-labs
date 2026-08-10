@@ -22,6 +22,9 @@ import { lessonVariablesTypes } from './lessonVariablesTypes'
 import { lessonConditionals } from './lessonConditionals'
 import { lessonLoops } from './lessonLoops'
 import { lessonFunctionsIntro } from './lessonFunctionsIntro'
+import { lessonLists } from './lessonLists'
+import { lessonStrings } from './lessonStrings'
+import { lessonDictionaries } from './lessonDictionaries'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -72,6 +75,9 @@ export function registerCurriculum(): void {
     lessonConditionals,
     lessonLoops,
     lessonFunctionsIntro,
+    lessonLists,
+    lessonStrings,
+    lessonDictionaries,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

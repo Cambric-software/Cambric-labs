@@ -279,6 +279,41 @@ export const CONCEPTS: Concept[] = [
     prerequisiteConceptIds: ['memory-model'],
     aliases: ['reference'],
   },
+  {
+    id: 'map',
+    title: 'Map',
+    summary: 'A collection of key-to-value associations.',
+    prerequisiteConceptIds: ['collection', 'array'],
+    aliases: ['dictionary', 'dict', 'hashmap', 'hashtable', 'record'],
+  },
+  {
+    id: 'set',
+    title: 'Set',
+    summary: 'A collection of unique values with no defined order.',
+    prerequisiteConceptIds: ['collection'],
+    aliases: ['unique collection'],
+  },
+  {
+    id: 'iteration',
+    title: 'Iteration',
+    summary: 'Visiting each element of a collection in turn.',
+    prerequisiteConceptIds: ['loop', 'collection'],
+    aliases: ['traversal', 'enumeration'],
+  },
+  {
+    id: 'index',
+    title: 'Index',
+    summary: 'A position used to access an element of an ordered collection.',
+    prerequisiteConceptIds: ['array'],
+    aliases: ['offset', 'position'],
+  },
+  {
+    id: 'string-method',
+    title: 'String Method',
+    summary: 'An operation that transforms or inspects text.',
+    prerequisiteConceptIds: ['string', 'function'],
+    aliases: ['text operation'],
+  },
 ]
 
 export const CONCEPT_BY_ID: Record<string, Concept> = Object.fromEntries(
