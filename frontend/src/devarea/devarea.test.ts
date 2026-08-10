@@ -11,9 +11,14 @@ import { JAVASCRIPT_ANALYZERS } from './analyzers/javascript'
 import { PYTHON_ANALYZERS } from './analyzers/python'
 import { TYPESCRIPT_ANALYZERS } from './analyzers/typescript'
 import { COMMON_ANALYZERS } from './analyzers/common'
+import { SQL_ANALYZERS } from './analyzers/sql'
+import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 
 function registerAll() {
-  for (const a of [...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS, ...COMMON_ANALYZERS]) {
+  for (const a of [
+    ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
+    ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
+  ]) {
     registerAnalyzer(a)
   }
 }
@@ -120,5 +125,64 @@ describe('engine', () => {
     const findings = flattenFindings(results)
     // The throwing analyzer contributes nothing, but js-no-var still fires.
     expect(findings.some((f) => f.ruleId === 'js-no-var')).toBe(true)
+  })
+
+  it('SQL: detects SELECT * and missing WHERE', () => {
+    const code = `SELECT * FROM users;`
+    const results = runAnalysis({ code, languageId: 'sql' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sql-no-select-star')).toBe(true)
+    expect(findings.some((f) => f.ruleId === 'sql-missing-where')).toBe(true)
+  })
+
+  it('SQL: flags DELETE without WHERE as critical bug', () => {
+    const code = `DELETE FROM users;`
+    const results = runAnalysis({ code, languageId: 'sql' })
+    const findings = flattenFindings(results)
+    const del = findings.find((f) => f.ruleId === 'sql-destructive-no-where')
+    expect(del).toBeDefined()
+    expect(del!.severity).toBe('critical')
+  })
+
+  it('SQL: detects string-concatenation injection risk', () => {
+    const code = "SELECT * FROM users WHERE name = ' + name + '"
+    const results = runAnalysis({ code, languageId: 'sql' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sql-injection-risk')).toBe(true)
+  })
+
+  it('HTML: detects img without alt', () => {
+    const code = `<img src="logo.png">`
+    const results = runAnalysis({ code, languageId: 'html' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'html-img-needs-alt')).toBe(true)
+  })
+
+  it('HTML: does not flag img that has alt', () => {
+    const code = `<img src="logo.png" alt="Logo">`
+    const results = runAnalysis({ code, languageId: 'html' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'html-img-needs-alt')).toBe(false)
+  })
+
+  it('HTML: detects inline style', () => {
+    const code = `<div style="color: red;">hi</div>`
+    const results = runAnalysis({ code, languageId: 'html' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'html-avoid-inline-style')).toBe(true)
+  })
+
+  it('CSS: detects !important', () => {
+    const code = `.x { color: red !important; }`
+    const results = runAnalysis({ code, languageId: 'css' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'css-avoid-important')).toBe(true)
+  })
+
+  it('CSS: detects empty rule', () => {
+    const code = `.empty {}`
+    const results = runAnalysis({ code, languageId: 'css' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'css-empty-rule')).toBe(true)
   })
 })
