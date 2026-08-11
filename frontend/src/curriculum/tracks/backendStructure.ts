@@ -39,7 +39,7 @@ const moduleServerBasics: CurriculumModule = {
   courseId: 'course-servers-apis',
   title: 'Servers & Routing',
   summary: 'HTTP servers, routes, and middleware.',
-  lessonIds: [],
+  lessonIds: ['lesson-http-servers', 'lesson-middleware'],
 }
 
 const moduleAuthSecurity: CurriculumModule = {
@@ -71,7 +71,7 @@ const moduleRelationalDesign: CurriculumModule = {
   courseId: 'course-databases',
   title: 'Relational Design',
   summary: 'Normalization, indexes, and transactions.',
-  lessonIds: [],
+  lessonIds: ['lesson-normalization', 'lesson-indexes-transactions'],
 }
 
 const moduleNosql: CurriculumModule = {

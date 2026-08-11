@@ -55,6 +55,8 @@ import { terminalAndFilesLessons } from './moduleTerminalAndFiles'
 import { cssLessons } from './moduleCss'
 import { httpLessons } from './moduleHttp'
 import { domEventsLessons } from './moduleDomEvents'
+import { serverBasicsLessons } from './moduleServerBasics'
+import { relationalDesignLessons } from './moduleRelationalDesign'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -136,6 +138,8 @@ export function registerCurriculum(): void {
     ...cssLessons,
     ...httpLessons,
     ...domEventsLessons,
+    ...serverBasicsLessons,
+    ...relationalDesignLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
