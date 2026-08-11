@@ -72,7 +72,7 @@ const moduleDesignPatterns: CurriculumModule = {
   courseId: 'course-testing-quality',
   title: 'Design Patterns',
   summary: 'Reusable solutions to recurring design problems.',
-  lessonIds: [],
+  lessonIds: ['lesson-essential-design-patterns', 'lesson-patterns-as-tools'],
 }
 
 export function registerSeStructure(): void {

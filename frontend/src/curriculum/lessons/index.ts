@@ -70,6 +70,7 @@ import { concurrencyLessons } from './moduleConcurrency'
 import { compilationLessons } from './moduleCompilation'
 import { codeReviewLessons } from './moduleCodeReview'
 import { debuggingLessons } from './moduleDebugging'
+import { designPatternsLessons } from './moduleDesignPatterns'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -166,6 +167,7 @@ export function registerCurriculum(): void {
     ...compilationLessons,
     ...codeReviewLessons,
     ...debuggingLessons,
+    ...designPatternsLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
