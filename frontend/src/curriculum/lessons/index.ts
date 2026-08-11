@@ -69,6 +69,7 @@ import { ownershipLessons } from './moduleOwnership'
 import { concurrencyLessons } from './moduleConcurrency'
 import { compilationLessons } from './moduleCompilation'
 import { codeReviewLessons } from './moduleCodeReview'
+import { debuggingLessons } from './moduleDebugging'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -164,6 +165,7 @@ export function registerCurriculum(): void {
     ...concurrencyLessons,
     ...compilationLessons,
     ...codeReviewLessons,
+    ...debuggingLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

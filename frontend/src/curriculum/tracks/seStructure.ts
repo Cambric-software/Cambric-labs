@@ -64,7 +64,7 @@ const moduleDebugging: CurriculumModule = {
   courseId: 'course-testing-quality',
   title: 'Debugging',
   summary: 'Finding and fixing the root cause.',
-  lessonIds: [],
+  lessonIds: ['lesson-debugging-method', 'lesson-debugging-toolbox'],
 }
 
 const moduleDesignPatterns: CurriculumModule = {
