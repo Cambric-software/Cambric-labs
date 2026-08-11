@@ -64,7 +64,7 @@ const moduleCompilation: CurriculumModule = {
   courseId: 'course-concurrency-systems',
   title: 'Compilation',
   summary: 'How source code becomes machine code.',
-  lessonIds: [],
+  lessonIds: ['lesson-lexing-and-parsing', 'lesson-codegen-and-jit'],
 }
 
 export function registerSystemsStructure(): void {

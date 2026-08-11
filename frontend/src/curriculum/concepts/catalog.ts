@@ -2443,8 +2443,15 @@ export const CONCEPTS: Concept[] = [
     id: 'lexer',
     title: 'Lexer',
     summary: 'A tokenizer converting source text into a stream of tokens.',
-    prerequisiteConceptIds: ['parser', 'string'],
+    prerequisiteConceptIds: ['parser', 'string', 'token'],
     aliases: ['tokenizer', 'scanner'],
+  },
+  {
+    id: 'token',
+    title: 'Token',
+    summary: 'A categorized lexical unit (a number, identifier, operator) produced by the lexer and consumed by the parser.',
+    prerequisiteConceptIds: ['string'],
+    aliases: ['lexeme'],
   },
   {
     id: 'grammar',
