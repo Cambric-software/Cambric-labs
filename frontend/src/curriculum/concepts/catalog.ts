@@ -28,6 +28,13 @@ export const CONCEPTS: Concept[] = [
     aliases: ['instruction'],
   },
   {
+    id: 'instruction',
+    title: 'Machine Instruction',
+    summary: 'A single CPU operation encoded as bits the processor can directly execute.',
+    prerequisiteConceptIds: ['binary', 'cpu'],
+    aliases: ['machine code instruction'],
+  },
+  {
     id: 'expression',
     title: 'Expression',
     summary: 'A piece of code that evaluates to a value.',

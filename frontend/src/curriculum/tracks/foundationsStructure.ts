@@ -49,7 +49,7 @@ const moduleHardware: CurriculumModule = {
   courseId: 'course-how-computers-work',
   title: 'CPU & Memory',
   summary: 'The processor, RAM, and how they cooperate.',
-  lessonIds: [],
+  lessonIds: ['lesson-cpu-cycle', 'lesson-ram-and-storage', 'lesson-hexadecimal'],
 }
 
 const moduleSourceToProgram: CurriculumModule = {
@@ -57,7 +57,7 @@ const moduleSourceToProgram: CurriculumModule = {
   courseId: 'course-running-code',
   title: 'From Source to Program',
   summary: 'Editors, compilers, interpreters, and runtimes.',
-  lessonIds: [],
+  lessonIds: ['lesson-compilers-vs-interpreters', 'lesson-packages-and-runtime'],
 }
 
 const moduleTerminalAndFiles: CurriculumModule = {
@@ -65,7 +65,7 @@ const moduleTerminalAndFiles: CurriculumModule = {
   courseId: 'course-running-code',
   title: 'Files & the Terminal',
   summary: 'The file system, the command line, and processes.',
-  lessonIds: [],
+  lessonIds: ['lesson-filesystem', 'lesson-command-line'],
 }
 
 export function registerFoundationsStructure(): void {

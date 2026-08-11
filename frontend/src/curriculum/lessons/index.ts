@@ -49,6 +49,9 @@ import { graphsLessons } from './moduleGraphs'
 import { searchingSortingLessons } from './moduleSearchingSorting'
 import { complexityLessons } from './moduleComplexity'
 import { paradigmsLessons } from './moduleParadigms'
+import { hardwareLessons } from './moduleHardware'
+import { sourceToProgramLessons } from './moduleSourceToProgram'
+import { terminalAndFilesLessons } from './moduleTerminalAndFiles'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -124,6 +127,9 @@ export function registerCurriculum(): void {
     ...searchingSortingLessons,
     ...complexityLessons,
     ...paradigmsLessons,
+    ...hardwareLessons,
+    ...sourceToProgramLessons,
+    ...terminalAndFilesLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
