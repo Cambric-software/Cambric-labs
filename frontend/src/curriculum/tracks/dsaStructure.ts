@@ -65,7 +65,7 @@ const moduleTrees: CurriculumModule = {
   courseId: 'course-hierarchical-structures',
   title: 'Trees',
   summary: 'Binary trees, BSTs, and heaps.',
-  lessonIds: [],
+  lessonIds: ['lesson-binary-trees', 'lesson-bst', 'lesson-heaps', 'lesson-tries'],
 }
 
 const moduleHashing: CurriculumModule = {
@@ -73,7 +73,7 @@ const moduleHashing: CurriculumModule = {
   courseId: 'course-hierarchical-structures',
   title: 'Hashing',
   summary: 'Hash functions, hash tables, and collisions.',
-  lessonIds: [],
+  lessonIds: ['lesson-hash-functions', 'lesson-hash-tables', 'lesson-bloom-filters'],
 }
 
 const moduleGraphs: CurriculumModule = {
@@ -81,7 +81,7 @@ const moduleGraphs: CurriculumModule = {
   courseId: 'course-hierarchical-structures',
   title: 'Graphs',
   summary: 'Nodes, edges, BFS, and DFS.',
-  lessonIds: [],
+  lessonIds: ['lesson-graphs-intro', 'lesson-bfs', 'lesson-dfs'],
 }
 
 const moduleSearchingSorting: CurriculumModule = {
