@@ -48,7 +48,7 @@ const moduleCodeReview: CurriculumModule = {
   courseId: 'course-version-control',
   title: 'Code Review',
   summary: 'Reviewing code before it merges.',
-  lessonIds: [],
+  lessonIds: ['lesson-what-to-review-for', 'lesson-review-workflow'],
 }
 
 const moduleTesting: CurriculumModule = {
