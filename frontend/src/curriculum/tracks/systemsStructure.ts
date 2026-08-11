@@ -48,7 +48,7 @@ const moduleOwnership: CurriculumModule = {
   courseId: 'course-memory-and-pointers',
   title: 'Ownership & Borrowing',
   summary: 'Rust ownership, borrowing, and lifetimes.',
-  lessonIds: [],
+  lessonIds: ['lesson-ownership', 'lesson-borrowing-lifetimes'],
 }
 
 const moduleConcurrency: CurriculumModule = {

@@ -65,6 +65,7 @@ import { frontendArchLessons } from './moduleFrontendArch'
 import { authSecurityLessons } from './moduleAuthSecurity'
 import { cachingScalingLessons } from './moduleCachingScaling'
 import { nosqlLessons } from './moduleNosql'
+import { ownershipLessons } from './moduleOwnership'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -156,6 +157,7 @@ export function registerCurriculum(): void {
     ...authSecurityLessons,
     ...cachingScalingLessons,
     ...nosqlLessons,
+    ...ownershipLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
