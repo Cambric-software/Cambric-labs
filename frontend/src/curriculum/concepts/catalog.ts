@@ -909,6 +909,13 @@ export const CONCEPTS: Concept[] = [
     aliases: ['crypto'],
   },
   {
+    id: 'security',
+    title: 'Security',
+    summary: 'The discipline of protecting systems and data: confidentiality, integrity, and availability against intentional adversaries.',
+    prerequisiteConceptIds: [],
+    aliases: ['infosec', 'application security'],
+  },
+  {
     id: 'profiling',
     title: 'Profiling',
     summary: 'Measuring where a program spends time and memory.',

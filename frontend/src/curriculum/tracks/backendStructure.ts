@@ -47,7 +47,7 @@ const moduleAuthSecurity: CurriculumModule = {
   courseId: 'course-servers-apis',
   title: 'Auth & Security',
   summary: 'Authentication, authorization, and rate limiting.',
-  lessonIds: [],
+  lessonIds: ['lesson-authentication-passwords-sessions', 'lesson-authorization-and-vulnerabilities'],
 }
 
 const moduleCachingScaling: CurriculumModule = {
