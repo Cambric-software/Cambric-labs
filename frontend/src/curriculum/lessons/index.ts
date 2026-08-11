@@ -57,6 +57,8 @@ import { httpLessons } from './moduleHttp'
 import { domEventsLessons } from './moduleDomEvents'
 import { serverBasicsLessons } from './moduleServerBasics'
 import { relationalDesignLessons } from './moduleRelationalDesign'
+import { memoryModelLessons } from './moduleMemoryModel'
+import { testingLessons } from './moduleTesting'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -140,6 +142,8 @@ export function registerCurriculum(): void {
     ...domEventsLessons,
     ...serverBasicsLessons,
     ...relationalDesignLessons,
+    ...memoryModelLessons,
+    ...testingLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

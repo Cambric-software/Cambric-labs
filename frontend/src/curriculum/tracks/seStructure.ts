@@ -56,7 +56,7 @@ const moduleTesting: CurriculumModule = {
   courseId: 'course-testing-quality',
   title: 'Testing',
   summary: 'Unit and integration tests.',
-  lessonIds: [],
+  lessonIds: ['lesson-unit-testing', 'lesson-tdd'],
 }
 
 const moduleDebugging: CurriculumModule = {

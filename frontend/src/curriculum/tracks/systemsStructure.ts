@@ -40,7 +40,7 @@ const moduleMemoryModel: CurriculumModule = {
   courseId: 'course-memory-and-pointers',
   title: 'The Memory Model',
   summary: 'Stack, heap, pointers, and manual allocation.',
-  lessonIds: [],
+  lessonIds: ['lesson-stack-vs-heap', 'lesson-pointers-and-bugs'],
 }
 
 const moduleOwnership: CurriculumModule = {
