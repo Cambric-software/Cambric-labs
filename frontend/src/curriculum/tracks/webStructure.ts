@@ -48,7 +48,7 @@ const moduleCss: CurriculumModule = {
   courseId: 'course-web-fundamentals',
   title: 'CSS',
   summary: 'Styling and layout rules.',
-  lessonIds: [],
+  lessonIds: ['lesson-box-model', 'lesson-flexbox', 'lesson-responsive-design'],
 }
 
 const moduleHttp: CurriculumModule = {
@@ -56,7 +56,7 @@ const moduleHttp: CurriculumModule = {
   courseId: 'course-web-fundamentals',
   title: 'HTTP & REST',
   summary: 'How browsers and servers talk.',
-  lessonIds: [],
+  lessonIds: ['lesson-http-basics', 'lesson-rest'],
 }
 
 const moduleDomEvents: CurriculumModule = {
@@ -64,7 +64,7 @@ const moduleDomEvents: CurriculumModule = {
   courseId: 'course-client-js',
   title: 'The DOM & Events',
   summary: 'Reading and changing the page; responding to user actions.',
-  lessonIds: [],
+  lessonIds: ['lesson-dom-tree', 'lesson-events-bubbling'],
 }
 
 const moduleAsyncJs: CurriculumModule = {

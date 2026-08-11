@@ -52,6 +52,9 @@ import { paradigmsLessons } from './moduleParadigms'
 import { hardwareLessons } from './moduleHardware'
 import { sourceToProgramLessons } from './moduleSourceToProgram'
 import { terminalAndFilesLessons } from './moduleTerminalAndFiles'
+import { cssLessons } from './moduleCss'
+import { httpLessons } from './moduleHttp'
+import { domEventsLessons } from './moduleDomEvents'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -130,6 +133,9 @@ export function registerCurriculum(): void {
     ...hardwareLessons,
     ...sourceToProgramLessons,
     ...terminalAndFilesLessons,
+    ...cssLessons,
+    ...httpLessons,
+    ...domEventsLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
