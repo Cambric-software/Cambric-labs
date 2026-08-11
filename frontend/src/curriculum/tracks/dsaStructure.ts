@@ -57,7 +57,7 @@ const moduleStacksQueues: CurriculumModule = {
   courseId: 'course-linear-structures',
   title: 'Stacks & Queues',
   summary: 'LIFO and FIFO structures and when to use each.',
-  lessonIds: [],
+  lessonIds: ['lesson-stacks-intro', 'lesson-queues-intro', 'lesson-deque', 'lesson-priority-queues'],
 }
 
 const moduleTrees: CurriculumModule = {

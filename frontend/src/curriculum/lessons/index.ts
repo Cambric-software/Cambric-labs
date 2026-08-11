@@ -41,6 +41,9 @@ import { lessonSql } from './lessonSql'
 import { lessonGit } from './lessonGit'
 import { lessonWhatIsMl } from './lessonWhatIsMl'
 
+// Per-module lesson bundles (each file exports an array of lessons for one module).
+import { stacksQueuesLessons } from './moduleStacksQueues'
+
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
   return {
@@ -108,6 +111,7 @@ export function registerCurriculum(): void {
     lessonSql,
     lessonGit,
     lessonWhatIsMl,
+    ...stacksQueuesLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

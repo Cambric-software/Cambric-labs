@@ -29,7 +29,7 @@ describe('curriculum structural integrity', () => {
     registerCurriculum()
     const registry = getCurriculumRegistry()
     const result = detectSemanticDuplicates(registry)
-    expect(result.pairs, result.pairs.map((p) => `${p.aId}~${p.bId}`).join('\n')).toEqual([])
+    expect(result.pairs, result.pairs.map((p) => `${p.lessonA}~${p.lessonB}`).join('\n')).toEqual([])
   })
 
   it('every lesson scores above the quality floor', async () => {

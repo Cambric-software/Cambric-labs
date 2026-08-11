@@ -1258,6 +1258,13 @@ export const CONCEPTS: Concept[] = [
     aliases: ['list comparison'],
   },
   {
+    id: 'list',
+    title: 'List',
+    summary: 'An ordered, indexable sequence of elements; the Python list is a dynamic array.',
+    prerequisiteConceptIds: ['collection', 'array'],
+    aliases: ['python list', 'sequence'],
+  },
+  {
     id: 'deque',
     title: 'Deque',
     summary: 'A double-ended queue supporting add and remove at both ends.',
