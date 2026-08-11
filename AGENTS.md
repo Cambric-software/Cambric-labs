@@ -93,12 +93,36 @@ The programming-education overhaul is IN PROGRESS. Verified working:
     patterns, test generation, language comparison, code explanation.
 
 ### Validation baseline
-- tsc --noEmit: exit 0. Vite build: exit 0 (~448KB JS, ~66KB CSS).
-- vitest: 35/35 pass (`cd frontend && npm test`).
-- Curriculum validator (`/cambric-labs/validate`): 16 lessons, 147
-  concepts, 38 languages; 0 structural errors, 0 semantic duplicates,
-  avg quality 99% (15 of 16 lessons at 100%, 1 at 95%).
+- tsc --noEmit: exit 0. Vite build: exit 0 (~729KB JS, ~66KB CSS).
+- vitest: 39/39 pass across 3 files (`cd frontend && npm test`):
+  `curriculum.test.ts` (4), `devarea.test.ts`, `suggestions.test.ts`.
+- Curriculum validator: 64 lessons, 349 concepts, 38 languages; 7 tracks
+  (Foundations, DSA, Web, Backend, Systems, SE, AI) fully populated;
+  0 structural errors, 0 semantic duplicates, every lesson ≥0.6 quality floor.
 - Backend: 189 tests pass (neural engine untouched).
+
+## Recovery + expansion checkpoint (current branch)
+- Branch: `cambric-overhaul-education-dev` (29 commits ahead of `origin/main`).
+- Lesson count: **64** (16 single-lesson files + 48 module-bundled).
+- Concept catalog: **349** concepts (prerequisites + aliases wired).
+- Tracks populated this session: Foundations (7), Web (7), Backend (4),
+  Systems (2), Software Engineering (2), AI (2). DSA (24) was done pre-crash.
+- Module files authored: moduleHardware, moduleSourceToProgram,
+  moduleTerminalAndFiles, moduleCss, moduleHttp, moduleDomEvents,
+  moduleServerBasics, moduleRelationalDesign, moduleMemoryModel,
+  moduleTesting, moduleNeuralNetworks (each wired into its track + index.ts).
+- **Push status: BLOCKED.** The provided `GITHUB_TOKEN` (ghu_, 40 chars) has
+  zero OAuth scopes (`X-OAuth-Scopes:` empty). It can READ public repos
+  but CANNOT push commits, create blobs, or write content (git push → 403
+  "denied to asserkdev"; git/blobs API → 403 "Resource not accessible by
+  integration"). All 29 commits are local only. To open the PR, the user
+  must provide a token with `repo`/`Contents: Write` scope OR push manually:
+  `git push -u origin cambric-overhaul-education-dev` then open a PR.
+- Remaining work: author Web (async-js, frontend-arch), Backend (auth,
+  caching, nosql), Systems (ownership, concurrency, compilation), SE
+  (code-review, debugging, design-patterns), AI (statistics, linear-algebra,
+  transformers) modules; activities/animations/adaptive polish; further
+  Developer Area expansion.
 
 ## Working conventions for this overhaul
 - Work in small batches; never one enormous generated file. Stream/batch/lazy-load (memory safety).
