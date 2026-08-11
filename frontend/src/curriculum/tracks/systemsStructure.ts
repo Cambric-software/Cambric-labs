@@ -56,7 +56,7 @@ const moduleConcurrency: CurriculumModule = {
   courseId: 'course-concurrency-systems',
   title: 'Concurrency',
   summary: 'Threads, synchronization, and safe sharing.',
-  lessonIds: [],
+  lessonIds: ['lesson-threads-and-data-races', 'lesson-deadlock-and-patterns'],
 }
 
 const moduleCompilation: CurriculumModule = {

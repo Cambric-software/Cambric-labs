@@ -66,6 +66,7 @@ import { authSecurityLessons } from './moduleAuthSecurity'
 import { cachingScalingLessons } from './moduleCachingScaling'
 import { nosqlLessons } from './moduleNosql'
 import { ownershipLessons } from './moduleOwnership'
+import { concurrencyLessons } from './moduleConcurrency'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -158,6 +159,7 @@ export function registerCurriculum(): void {
     ...cachingScalingLessons,
     ...nosqlLessons,
     ...ownershipLessons,
+    ...concurrencyLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
