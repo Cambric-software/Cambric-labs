@@ -63,7 +63,7 @@ const moduleNeuralNetworks: CurriculumModule = {
   courseId: 'course-deep-learning',
   title: 'Neural Networks',
   summary: 'Layers, weights, and training.',
-  lessonIds: [],
+  lessonIds: ['lesson-neuron-forward-pass', 'lesson-gradient-descent'],
 }
 
 const moduleTransformers: CurriculumModule = {

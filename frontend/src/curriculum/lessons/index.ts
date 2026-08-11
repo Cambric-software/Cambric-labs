@@ -59,6 +59,7 @@ import { serverBasicsLessons } from './moduleServerBasics'
 import { relationalDesignLessons } from './moduleRelationalDesign'
 import { memoryModelLessons } from './moduleMemoryModel'
 import { testingLessons } from './moduleTesting'
+import { neuralNetworksLessons } from './moduleNeuralNetworks'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -144,6 +145,7 @@ export function registerCurriculum(): void {
     ...relationalDesignLessons,
     ...memoryModelLessons,
     ...testingLessons,
+    ...neuralNetworksLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {
