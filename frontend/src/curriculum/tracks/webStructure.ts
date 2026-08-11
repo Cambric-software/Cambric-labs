@@ -80,7 +80,7 @@ const moduleFrontendArch: CurriculumModule = {
   courseId: 'course-client-js',
   title: 'Frontend Architecture',
   summary: 'Components, state, and organizing browser apps.',
-  lessonIds: [],
+  lessonIds: ['lesson-component-model', 'lesson-state-management'],
 }
 
 export function registerWebStructure(): void {
