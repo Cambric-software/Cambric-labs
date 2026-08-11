@@ -46,6 +46,9 @@ import { stacksQueuesLessons } from './moduleStacksQueues'
 import { treesLessons } from './moduleTrees'
 import { hashingLessons } from './moduleHashing'
 import { graphsLessons } from './moduleGraphs'
+import { searchingSortingLessons } from './moduleSearchingSorting'
+import { complexityLessons } from './moduleComplexity'
+import { paradigmsLessons } from './moduleParadigms'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -118,6 +121,9 @@ export function registerCurriculum(): void {
     ...treesLessons,
     ...hashingLessons,
     ...graphsLessons,
+    ...searchingSortingLessons,
+    ...complexityLessons,
+    ...paradigmsLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

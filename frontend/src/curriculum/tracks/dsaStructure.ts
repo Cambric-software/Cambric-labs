@@ -89,7 +89,7 @@ const moduleSearchingSorting: CurriculumModule = {
   courseId: 'course-algorithm-design',
   title: 'Searching & Sorting',
   summary: 'Linear search, binary search, and sorting algorithms.',
-  lessonIds: [],
+  lessonIds: ['lesson-binary-search', 'lesson-simple-sorts', 'lesson-merge-quick-sort', 'lesson-counting-sort'],
 }
 
 const moduleComplexity: CurriculumModule = {
@@ -97,7 +97,7 @@ const moduleComplexity: CurriculumModule = {
   courseId: 'course-algorithm-design',
   title: 'Computational Complexity',
   summary: 'Big-O notation and how to reason about growth.',
-  lessonIds: [],
+  lessonIds: ['lesson-big-o', 'lesson-amortized-cost'],
 }
 
 const moduleParadigms: CurriculumModule = {
@@ -105,7 +105,7 @@ const moduleParadigms: CurriculumModule = {
   courseId: 'course-algorithm-design',
   title: 'Design Paradigms',
   summary: 'Divide and conquer, greedy, dynamic programming, and backtracking.',
-  lessonIds: [],
+  lessonIds: ['lesson-divide-and-conquer', 'lesson-greedy', 'lesson-dynamic-programming', 'lesson-backtracking'],
 }
 
 export function registerDsaStructure(): void {
