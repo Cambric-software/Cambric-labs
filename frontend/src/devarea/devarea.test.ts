@@ -13,11 +13,13 @@ import { TYPESCRIPT_ANALYZERS } from './analyzers/typescript'
 import { COMMON_ANALYZERS } from './analyzers/common'
 import { SQL_ANALYZERS } from './analyzers/sql'
 import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
+import { ERROR_ANALYZERS } from './analyzers/errors'
 
 function registerAll() {
   for (const a of [
     ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
     ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
+    ...ERROR_ANALYZERS,
   ]) {
     registerAnalyzer(a)
   }
@@ -184,5 +186,107 @@ describe('engine', () => {
     const results = runAnalysis({ code, languageId: 'css' })
     const findings = flattenFindings(results)
     expect(findings.some((f) => f.ruleId === 'css-empty-rule')).toBe(true)
+  })
+})
+
+describe('error analyzers', () => {
+  beforeEach(registerAll)
+
+  it('detects unbalanced parenthesis in JS', () => {
+    const code = `function f() {\n  console.log("missing close"\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'common-unbalanced-delimiters' && f.category === 'error')).toBe(true)
+  })
+
+  it('does not flag balanced delimiters', () => {
+    const code = `const arr = [1, 2, 3];\nconst obj = { a: 1 };`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'common-unbalanced-delimiters')).toBe(false)
+  })
+
+  it('ignores delimiters inside strings and comments', () => {
+    const code = `const s = "a(b"; // comment with {\nconst x = [1];`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'common-unbalanced-delimiters')).toBe(false)
+  })
+
+  it('detects unterminated string literal in JS', () => {
+    const code = `const s = "never closed`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'common-unbalanced-delimiters' && f.message.includes('Unterminated string'))).toBe(true)
+  })
+
+  it('detects unterminated block comment', () => {
+    const code = `/* this comment never closes`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'common-unbalanced-delimiters' && f.message.includes('block comment'))).toBe(true)
+  })
+
+  it('detects leading comma in JS array literal', () => {
+    const code = `const arr = [, 1, 2];`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'js-leading-comma')).toBe(true)
+  })
+
+  it('detects duplicate parameter names in JS', () => {
+    const code = `function f(a, a) { return a; }`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'js-duplicate-params')).toBe(true)
+  })
+
+  it('detects Python mixed tab/space indentation', () => {
+    const code = `def f():\n\t  return 1`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'py-tab-space-mix')).toBe(true)
+  })
+
+  it('does not flag pure-space Python indentation', () => {
+    const code = `def f():\n    return 1`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'py-tab-space-mix')).toBe(false)
+  })
+
+  it('detects Python return outside function', () => {
+    const code = `return 42`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'py-return-outside-function')).toBe(true)
+  })
+
+  it('does not flag return inside a function', () => {
+    const code = `def f():\n    return 42`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'py-return-outside-function')).toBe(false)
+  })
+
+  it('detects SQL trailing comma before FROM', () => {
+    const code = `SELECT a, b, FROM users`
+    const results = runAnalysis({ code, languageId: 'sql' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sql-trailing-comma')).toBe(true)
+  })
+
+  it('does not flag valid SQL', () => {
+    const code = `SELECT a, b FROM users`
+    const results = runAnalysis({ code, languageId: 'sql' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sql-trailing-comma')).toBe(false)
+  })
+
+  it('error category is now populated for JS', () => {
+    const code = `const arr = [, 1];`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const summary = summarizeByCategory(results)
+    expect(summary.error).toBeGreaterThan(0)
   })
 })
