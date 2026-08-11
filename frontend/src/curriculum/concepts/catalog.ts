@@ -1867,8 +1867,22 @@ export const CONCEPTS: Concept[] = [
     id: 'vector',
     title: 'Vector',
     summary: 'An ordered list of numbers; the core data structure for representing inputs, weights, and activations in ML.',
-    prerequisiteConceptIds: ['array', 'literal'],
+    prerequisiteConceptIds: ['array', 'literal', 'coordinate-system'],
     aliases: ['array of numbers', 'feature vector'],
+  },
+  {
+    id: 'vector-addition',
+    title: 'Vector Addition',
+    summary: 'Componentwise sum of two vectors; geometrically the tip-to-tail combination of displacements into one net vector.',
+    prerequisiteConceptIds: ['vector', 'arithmetic'],
+    aliases: ['vector sum'],
+  },
+  {
+    id: 'coordinate-system',
+    title: 'Coordinate System',
+    summary: 'A frame of reference giving each point a tuple of numbers (coordinates); the basis vectors define the axes.',
+    prerequisiteConceptIds: ['arithmetic'],
+    aliases: ['coordinate frame', 'axes'],
   },
   {
     id: 'matrix',
@@ -1876,6 +1890,13 @@ export const CONCEPTS: Concept[] = [
     summary: 'A 2D array of numbers; matrix multiplication computes a whole layer of neurons in parallel.',
     prerequisiteConceptIds: ['vector', 'array'],
     aliases: ['2d array', 'tensor (2d)'],
+  },
+  {
+    id: 'linear-transformation',
+    title: 'Linear Transformation',
+    summary: 'A function that maps vectors to vectors via matrix multiplication, preserving straight lines and the origin; the "what a matrix does" view.',
+    prerequisiteConceptIds: ['matrix', 'vector', 'function'],
+    aliases: ['linear map', 'linear function'],
   },
   {
     id: 'activation-function',

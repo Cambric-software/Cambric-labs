@@ -47,7 +47,7 @@ const moduleLinearAlgebra: CurriculumModule = {
   courseId: 'course-ml-foundations',
   title: 'Linear Algebra',
   summary: 'Vectors and matrices for ML.',
-  lessonIds: [],
+  lessonIds: ['lesson-vectors', 'lesson-matrices-and-linear-maps'],
 }
 
 const moduleMlIntro: CurriculumModule = {
