@@ -55,7 +55,7 @@ const moduleCachingScaling: CurriculumModule = {
   courseId: 'course-servers-apis',
   title: 'Caching & Scaling',
   summary: 'Caching, queues, and background jobs.',
-  lessonIds: [],
+  lessonIds: ['lesson-caching', 'lesson-horizontal-scaling'],
 }
 
 const moduleSql: CurriculumModule = {

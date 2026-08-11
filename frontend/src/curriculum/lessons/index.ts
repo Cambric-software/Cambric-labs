@@ -63,6 +63,7 @@ import { neuralNetworksLessons } from './moduleNeuralNetworks'
 import { asyncJsLessons } from './moduleAsyncJs'
 import { frontendArchLessons } from './moduleFrontendArch'
 import { authSecurityLessons } from './moduleAuthSecurity'
+import { cachingScalingLessons } from './moduleCachingScaling'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -152,6 +153,7 @@ export function registerCurriculum(): void {
     ...asyncJsLessons,
     ...frontendArchLessons,
     ...authSecurityLessons,
+    ...cachingScalingLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

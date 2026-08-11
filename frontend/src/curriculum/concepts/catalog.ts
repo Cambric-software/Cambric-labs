@@ -923,6 +923,13 @@ export const CONCEPTS: Concept[] = [
     aliases: ['performance profiling'],
   },
   {
+    id: 'performance',
+    title: 'Performance',
+    summary: 'How efficiently a program uses time and memory; the practice of measuring and improving latency, throughput, and footprint.',
+    prerequisiteConceptIds: ['complexity'],
+    aliases: ['perf', 'efficiency'],
+  },
+  {
     id: 'distributed-systems',
     title: 'Distributed Systems',
     summary: 'Multiple computers cooperating as one system.',
