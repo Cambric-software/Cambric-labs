@@ -2972,6 +2972,27 @@ export const CONCEPTS: Concept[] = [
     aliases: ['attention mechanism'],
   },
   {
+    id: 'softmax',
+    title: 'Softmax',
+    summary: 'A function turning a vector of scores into a probability distribution (each value in (0,1), sum to 1); differentiable, unlike argmax.',
+    prerequisiteConceptIds: ['vector'],
+    aliases: ['normalized exponential'],
+  },
+  {
+    id: 'layer-normalization',
+    title: 'Layer Normalization',
+    summary: 'Normalizing each token\'s activation vector to zero mean and unit variance, stabilizing training of deep stacks across positions and batches.',
+    prerequisiteConceptIds: ['mean-median', 'variance', 'vector'],
+    aliases: ['layernorm'],
+  },
+  {
+    id: 'residual-connection',
+    title: 'Residual Connection',
+    summary: 'Adding a sublayer\'s input to its output (x + Sublayer(x)); gives gradient a direct path backward through deep stacks, preventing vanishing.',
+    prerequisiteConceptIds: ['vector-addition', 'neural-network'],
+    aliases: ['skip connection'],
+  },
+  {
     id: 'self-attention',
     title: 'Self-Attention',
     summary: 'Attention where queries, keys, and values all come from the same input sequence, letting each token weigh every other token.',

@@ -73,6 +73,7 @@ import { debuggingLessons } from './moduleDebugging'
 import { designPatternsLessons } from './moduleDesignPatterns'
 import { statisticsLessons } from './moduleStatistics'
 import { linearAlgebraLessons } from './moduleLinearAlgebra'
+import { transformersLessons } from './moduleTransformers'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -172,6 +173,7 @@ export function registerCurriculum(): void {
     ...designPatternsLessons,
     ...statisticsLessons,
     ...linearAlgebraLessons,
+    ...transformersLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

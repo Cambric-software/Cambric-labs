@@ -71,7 +71,7 @@ const moduleTransformers: CurriculumModule = {
   courseId: 'course-deep-learning',
   title: 'Transformers & LLMs',
   summary: 'Attention, embeddings, and large language models.',
-  lessonIds: [],
+  lessonIds: ['lesson-attention-mechanism', 'lesson-transformer-architecture'],
 }
 
 export function registerAiStructure(): void {
