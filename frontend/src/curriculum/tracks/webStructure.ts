@@ -72,7 +72,7 @@ const moduleAsyncJs: CurriculumModule = {
   courseId: 'course-client-js',
   title: 'Async JavaScript',
   summary: 'Promises, async/await, and the event loop.',
-  lessonIds: [],
+  lessonIds: ['lesson-event-loop', 'lesson-promises-async-await'],
 }
 
 const moduleFrontendArch: CurriculumModule = {
