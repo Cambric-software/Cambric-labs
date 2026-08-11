@@ -102,27 +102,37 @@ The programming-education overhaul is IN PROGRESS. Verified working:
 - Backend: 189 tests pass (neural engine untouched).
 
 ## Recovery + expansion checkpoint (current branch)
-- Branch: `cambric-overhaul-education-dev` (29 commits ahead of `origin/main`).
-- Lesson count: **64** (16 single-lesson files + 48 module-bundled).
-- Concept catalog: **349** concepts (prerequisites + aliases wired).
-- Tracks populated this session: Foundations (7), Web (7), Backend (4),
-  Systems (2), Software Engineering (2), AI (2). DSA (24) was done pre-crash.
-- Module files authored: moduleHardware, moduleSourceToProgram,
-  moduleTerminalAndFiles, moduleCss, moduleHttp, moduleDomEvents,
-  moduleServerBasics, moduleRelationalDesign, moduleMemoryModel,
-  moduleTesting, moduleNeuralNetworks (each wired into its track + index.ts).
+- Branch: `cambric-overhaul-education-dev` (37 commits ahead of `origin/main`).
+- Lesson count: **92** (16 single-lesson files + 76 module-bundled across 42 modules).
+- Concept catalog: **380+** concepts (prerequisites + aliases wired).
+- Tracks populated (all 7 tracks fully populated, NO empty modules remain):
+  - Foundations (7 lessons), DSA (24), Web (7), Backend (10), Systems (6),
+    Software Engineering (8), AI (9).
+- Module files authored this session (the 14 empty modules, 2 lessons each):
+  Backend: moduleAuthSecurity, moduleCachingScaling, moduleNosql.
+  Systems: moduleOwnership, moduleConcurrency, moduleCompilation.
+  SE: moduleCodeReview, moduleDebugging, moduleDesignPatterns.
+  AI: moduleStatistics, moduleLinearAlgebra, moduleTransformers.
+  (Earlier session: moduleHardware, moduleSourceToProgram, moduleTerminalAndFiles,
+  moduleCss, moduleHttp, moduleDomEvents, moduleServerBasics, moduleRelationalDesign,
+  moduleMemoryModel, moduleTesting, moduleNeuralNetworks.)
+- **All 14 empty modules are now filled.** Verified: `grep "lessonIds: \[\]" tracks/*Structure.ts` returns nothing.
+- Concepts added this session: security, performance, consistency, token (auth); readability,
+  maintainability, pair-programming, communication, debugging-strategy, reproducibility,
+  hypothesis-testing, root-cause, logging, console-io, strategy-pattern, observer-pattern,
+  factory-pattern, composition, interface, mean-median, normal-distribution, outlier,
+  sampling, correlation, bias-variance, arithmetic, vector-addition, coordinate-system,
+  linear-transformation, softmax, layer-normalization, residual-connection.
 - **Push status: BLOCKED.** The provided `GITHUB_TOKEN` (ghu_, 40 chars) has
   zero OAuth scopes (`X-OAuth-Scopes:` empty). It can READ public repos
   but CANNOT push commits, create blobs, or write content (git push → 403
   "denied to asserkdev"; git/blobs API → 403 "Resource not accessible by
-  integration"). All 29 commits are local only. To open the PR, the user
+  integration"). All 37 commits are local only. To open the PR, the user
   must provide a token with `repo`/`Contents: Write` scope OR push manually:
   `git push -u origin cambric-overhaul-education-dev` then open a PR.
-- Remaining work: author Web (async-js, frontend-arch), Backend (auth,
-  caching, nosql), Systems (ownership, concurrency, compilation), SE
-  (code-review, debugging, design-patterns), AI (statistics, linear-algebra,
-  transformers) modules; activities/animations/adaptive polish; further
-  Developer Area expansion.
+- Remaining work: activities/animations/adaptive polish; further Developer Area
+  expansion (static analysis, refactoring, test-gen); further curriculum
+  expansion only after architecture/content-quality systems are solid.
 
 ## Working conventions for this overhaul
 - Work in small batches; never one enormous generated file. Stream/batch/lazy-load (memory safety).
