@@ -39,7 +39,7 @@ const moduleStatistics: CurriculumModule = {
   courseId: 'course-ml-foundations',
   title: 'Statistics',
   summary: 'Summarizing and reasoning about data.',
-  lessonIds: [],
+  lessonIds: ['lesson-descriptive-statistics', 'lesson-statistical-reasoning'],
 }
 
 const moduleLinearAlgebra: CurriculumModule = {
