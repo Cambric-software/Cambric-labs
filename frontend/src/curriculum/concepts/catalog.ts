@@ -930,6 +930,13 @@ export const CONCEPTS: Concept[] = [
     aliases: ['perf', 'efficiency'],
   },
   {
+    id: 'consistency',
+    title: 'Consistency',
+    summary: 'The guarantee that every read reflects the latest write (strong) or eventually does (eventual); the C in CAP.',
+    prerequisiteConceptIds: ['distributed-systems'],
+    aliases: ['data consistency', 'linearizability'],
+  },
+  {
     id: 'distributed-systems',
     title: 'Distributed Systems',
     summary: 'Multiple computers cooperating as one system.',

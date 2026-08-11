@@ -79,7 +79,7 @@ const moduleNosql: CurriculumModule = {
   courseId: 'course-databases',
   title: 'NoSQL',
   summary: 'Document, key-value, and graph databases.',
-  lessonIds: [],
+  lessonIds: ['lesson-document-databases', 'lesson-key-value-and-cap'],
 }
 
 export function registerBackendStructure(): void {
