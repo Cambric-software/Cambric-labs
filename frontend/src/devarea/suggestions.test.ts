@@ -155,6 +155,25 @@ describe('compareLanguages', () => {
     expect(results).toEqual([])
   })
 
+  it('returns informative fallback when no patterns match', () => {
+    const code = `x = 1 + 2`
+    const results = compareLanguages({ code, languageId: 'python' }, 'javascript')
+    expect(results.length).toBe(1)
+    expect(results[0].pattern).toBe('No direct equivalent found')
+    expect(results[0].note).toContain('did not match')
+  })
+
+  it('returns empty for empty code (not fallback)', () => {
+    const results = compareLanguages({ code: '   ', languageId: 'python' }, 'javascript')
+    expect(results).toEqual([])
+  })
+
+  it('clearly identifies source and target language in results', () => {
+    const code = `def greet(name):\n    return name`
+    const results = compareLanguages({ code, languageId: 'python' }, 'javascript')
+    expect(results.every((r) => r.sourceLanguage === 'python' && r.targetLanguage === 'javascript')).toBe(true)
+  })
+
   it('comparisonSuggestions wraps as RefactorSuggestion', () => {
     const code = `def greet(name):\n    return name`
     const suggestions = comparisonSuggestions({ code, languageId: 'python' }, 'javascript')

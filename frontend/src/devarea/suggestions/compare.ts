@@ -147,6 +147,23 @@ export function compareLanguages(
       })
     }
   }
+  // If no recognized patterns matched, return a single informational result
+  // rather than silently returning nothing — so the learner knows the tool
+  // ran but had no translation for this code, instead of appearing broken.
+  if (results.length === 0 && input.code.trim().length > 0) {
+    results.push({
+      sourceLanguage: input.languageId,
+      targetLanguage,
+      pattern: 'No direct equivalent found',
+      sourceSnippet: input.code.trim().split('\n')[0].slice(0, 60),
+      targetSnippet: `// No recognized pattern to translate from ${input.languageId} to ${targetLanguage}.`,
+      note:
+        `This snippet did not match any known ${input.languageId}-to-${targetLanguage} idiom pattern. ` +
+        `The comparison engine recognizes common patterns (function defs, string interpolation, ` +
+        `loops, map literals). Try a snippet that uses one of those, or study the languages' ` +
+        `syntax references directly — not every construct has a clean one-line equivalent.`,
+    })
+  }
   return results
 }
 
