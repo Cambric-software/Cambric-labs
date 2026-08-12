@@ -102,12 +102,16 @@ The programming-education overhaul is IN PROGRESS. Verified working:
 - Backend: 189 tests pass (neural engine untouched).
 
 ## Recovery + expansion checkpoint (current branch)
-- Branch: `cambric-overhaul-education-dev` (37 commits ahead of `origin/main`).
-- Lesson count: **92** (16 single-lesson files + 76 module-bundled across 42 modules).
-- Concept catalog: **380+** concepts (prerequisites + aliases wired).
-- Tracks populated (all 7 tracks fully populated, NO empty modules remain):
+- Branch: `cambric-overhaul-education-dev` (52 commits ahead of `origin/main`).
+- **All commits PUSHED** to GitHub. Remote HEAD matches local HEAD.
+- **PR #3 OPEN**: "Cambric Labs Education Platform Overhaul: Curriculum + Developer Area"
+  https://github.com/Cambric-software/Cambric-labs/pull/3 (head: cambric-overhaul-education-dev → main)
+- Lesson count: **96** (16 single-lesson files + 80 module-bundled across 44 modules).
+- Concept catalog: **431** concepts (prerequisites + aliases wired).
+- **9 tracks** (added Programming Languages track this session).
+- Tracks populated (all 9 tracks fully populated, NO empty modules remain):
   - Foundations (7 lessons), DSA (24), Web (7), Backend (10), Systems (6),
-    Software Engineering (8), AI (9).
+    Software Engineering (8), AI (9), Programming Languages (4 new).
 - Module files authored this session (the 14 empty modules, 2 lessons each):
   Backend: moduleAuthSecurity, moduleCachingScaling, moduleNosql.
   Systems: moduleOwnership, moduleConcurrency, moduleCompilation.
@@ -122,17 +126,36 @@ The programming-education overhaul is IN PROGRESS. Verified working:
   hypothesis-testing, root-cause, logging, console-io, strategy-pattern, observer-pattern,
   factory-pattern, composition, interface, mean-median, normal-distribution, outlier,
   sampling, correlation, bias-variance, arithmetic, vector-addition, coordinate-system,
-  linear-transformation, softmax, layer-normalization, residual-connection.
-- **Push status: BLOCKED.** The provided `GITHUB_TOKEN` (ghu_, 40 chars) has
-  zero OAuth scopes (`X-OAuth-Scopes:` empty). It can READ public repos
-  but CANNOT push commits, create blobs, or write content (git push → 403
-  "denied to asserkdev"; git/blobs API → 403 "Resource not accessible by
-  integration"). All 37 commits are local only. To open the PR, the user
-  must provide a token with `repo`/`Contents: Write` scope OR push manually:
-  `git push -u origin cambric-overhaul-education-dev` then open a PR.
-- Remaining work: activities/animations/adaptive polish; further Developer Area
-  expansion (static analysis, refactoring, test-gen); further curriculum
-  expansion only after architecture/content-quality systems are solid.
+  linear-transformation, softmax, layer-normalization, residual-connection,
+  type-system, static-typing, dynamic-typing, type-inference, type-error,
+  strong-typing, weak-typing, type-coercion.
+
+## Continuation session (2026-08-12) — Developer Area + curriculum expansion
+- **Developer Area: 50 analyzers** across 9 files + 4 suggestion engines.
+  - `analyzers/security.ts` (NEW, 5): XSS-innerHTML, command-injection, path-traversal,
+    weak-crypto (MD5/SHA1), open-redirect.
+  - `analyzers/performance.ts` (NEW, 5): nested-loop (O(n²)), repeated-computation,
+    list-concat-in-loop (Python), sequential-await-in-loop (JS/TS), regex-in-loop.
+  - `analyzers/maintainability.ts` (NEW, 4): magic-number, huge-function (>50 lines),
+    deep-nesting (4+ levels), dead-code-block (5+ commented lines).
+  - `analyzers/errors.ts` (6): unbalanced-delimiters, py-tab-space-mix, py-return-outside-function,
+    js-leading-comma, js-duplicate-params, sql-trailing-comma.
+  - Plus existing: javascript(7), python(7), typescript(3), sql(4), htmlCss(4), common(5).
+  - `suggestions/tests.ts`: enhanced — detects arrow functions + class methods (not just `function name`).
+- **Curriculum: Programming Languages track** (NEW, 4 lessons, 2 modules):
+  - module-type-systems: static-vs-dynamic-typing, strong-vs-weak-typing.
+  - module-memory-models: memory-management-strategies, ownership-and-borrowing-concepts.
+  - Teaches genuine language design differences (Python/JS/TS/Java/Rust/C), not syntax.
+  - Types extended: compare content block now allows 2-or-3 languages; added 'compare' to AnimationType.
+- **Validation baseline (all green)**:
+  - tsc --noEmit: exit 0.
+  - vitest: **85/85** pass (3 files: curriculum 4, devarea 62, suggestions 19).
+  - vite build: succeeds (~372KB JS).
+  - Backend pytest: 189/189 pass (neural engine untouched; requires `pip install -r backend/requirements.txt pytest`).
+  - Curriculum validator: 0 structural errors, 0 duplicates, all lessons ≥ quality floor.
+- Remaining work: further curriculum expansion (language-specific lessons for the 28
+  registered-but-untaught languages); activity/animation variety; adaptive learning polish;
+  gap/integrity analyzer expansion. Architecture and content-quality systems are solid.
 
 ## Working conventions for this overhaul
 - Work in small batches; never one enormous generated file. Stream/batch/lazy-load (memory safety).
