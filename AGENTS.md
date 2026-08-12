@@ -147,15 +147,35 @@ The programming-education overhaul is IN PROGRESS. Verified working:
   - module-memory-models: memory-management-strategies, ownership-and-borrowing-concepts.
   - Teaches genuine language design differences (Python/JS/TS/Java/Rust/C), not syntax.
   - Types extended: compare content block now allows 2-or-3 languages; added 'compare' to AnimationType.
+
+## Finalization session (2026-08-10) — polish, verify, release
+- **Compare animation renderer** (`AnimationRenderer.tsx`): `ComparePlayer` component
+  renders side-by-side panels with side highlighting. Dispatched on `animation.type === 'compare'`.
+  Updated 3 compare animations (moduleTypeSystems x2, moduleMemoryModels x1) with `payload.sides`.
+- **Sequential prev/next navigation** (`LearnPage.tsx`): prev/next now follows curriculum
+  hierarchy (lessons in module order → modules in course order → courses in track order)
+  instead of global difficulty sort. Breadcrumb added (track › course › module).
+- **Test generator async-aware** (`suggestions/tests.ts`): `DetectedFunction` now has `isAsync`.
+  Python `async def` → `async def test_foo()` with `await`. JS/TS async named/arrow/method →
+  `async ()` test with `await`. Python dedup added (was JS/TS only). Malformed/empty input safe.
+- **Language comparison fallback** (`suggestions/compare.ts`): when no patterns match,
+  returns single informative result instead of empty array. `source==target` still returns [].
+- **Loop Control lesson** (`lessonLoopControl.ts`, NEW): teaches break/continue — fills the
+  genuine gap where `break-continue` was a registered-but-untaught concept. Added to
+  module-control-flow after lesson-loops. Compare block (flag vs break), codeWalk animation,
+  codeChallenge activity, 3 comprehension checks.
 - **Validation baseline (all green)**:
   - tsc --noEmit: exit 0.
-  - vitest: **85/85** pass (3 files: curriculum 4, devarea 62, suggestions 19).
-  - vite build: succeeds (~372KB JS).
-  - Backend pytest: 189/189 pass (neural engine untouched; requires `pip install -r backend/requirements.txt pytest`).
+  - vitest: **94/94** pass (3 files: curriculum 4, devarea 62, suggestions 28).
+  - vite build: succeeds.
+  - Backend pytest: 189/189 pass.
   - Curriculum validator: 0 structural errors, 0 duplicates, all lessons ≥ quality floor.
-- Remaining work: further curriculum expansion (language-specific lessons for the 28
-  registered-but-untaught languages); activity/animation variety; adaptive learning polish;
-  gap/integrity analyzer expansion. Architecture and content-quality systems are solid.
+  - Browser verification: Learn page renders all tracks/courses/modules/lessons; new loop-control
+    lesson renders with breadcrumb, animation, activity, comprehension; Developer Area runs
+    analysis end-to-end (findings + generated tests displayed).
+- **Counts**: 97 lessons, 44 modules, 9 tracks, 431 concepts, 38 languages, 50 analyzers.
+- Remaining work: further curriculum expansion for the 28 registered-but-untaught languages
+  (architecture supports it; content authoring is the long-tail task).
 
 ## Working conventions for this overhaul
 - Work in small batches; never one enormous generated file. Stream/batch/lazy-load (memory safety).
