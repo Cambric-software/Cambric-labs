@@ -20,6 +20,7 @@ import { registerBackendStructure } from '../tracks/backendStructure'
 import { registerSystemsStructure } from '../tracks/systemsStructure'
 import { registerSeStructure } from '../tracks/seStructure'
 import { registerAiStructure } from '../tracks/aiStructure'
+import { registerLanguagesStructure } from '../tracks/languagesStructure'
 
 // Lesson module imports (full content). These are statically imported only
 // to derive stubs + to power the loader; the loader itself can swap to
@@ -74,6 +75,8 @@ import { designPatternsLessons } from './moduleDesignPatterns'
 import { statisticsLessons } from './moduleStatistics'
 import { linearAlgebraLessons } from './moduleLinearAlgebra'
 import { transformersLessons } from './moduleTransformers'
+import { typeSystemsLessons } from './moduleTypeSystems'
+import { memoryModelsLessons } from './moduleMemoryModels'
 
 /** Project a full LessonDetail down to a lightweight LessonStub. */
 function toStub(lesson: LessonDetail): LessonStub {
@@ -124,6 +127,7 @@ export function registerCurriculum(): void {
   registerSystemsStructure()
   registerSeStructure()
   registerAiStructure()
+  registerLanguagesStructure()
 
   const allLessons: LessonDetail[] = [
     lessonVariablesIntro,
@@ -174,6 +178,8 @@ export function registerCurriculum(): void {
     ...statisticsLessons,
     ...linearAlgebraLessons,
     ...transformersLessons,
+    ...typeSystemsLessons,
+    ...memoryModelsLessons,
   ]
 
   for (const [moduleId, lessons] of groupByModule(allLessons)) {

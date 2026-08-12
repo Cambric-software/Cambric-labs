@@ -139,7 +139,7 @@ export type LessonBlock =
   | { kind: 'callout'; variant: CalloutVariant; title?: string; text: string }
   | { kind: 'code'; languageId: string; caption?: string; code: string }
   | { kind: 'codeWithOutput'; languageId: string; code: string; output: string; caption?: string }
-  | { kind: 'compare'; languageIds: [string, string]; caption?: string; snippets: [string, string] }
+  | { kind: 'compare'; languageIds: [string, string] | [string, string, string]; caption?: string; snippets: [string, string] | [string, string, string] }
   | { kind: 'steps'; caption?: string; steps: string[] }
 
 export type CalloutVariant = 'info' | 'warning' | 'success' | 'tip' | 'danger'
@@ -215,6 +215,7 @@ export type AnimationType =
   | 'graphTraversal' // visiting nodes of a graph (BFS/DFS)
   | 'eventLoop' // task queue / microtask / call stack interplay
   | 'asyncFlow' // promise / async-await resolution order
+  | 'compare' // same operation across languages/strategies side by side
 
 export interface AnimationStep {
   caption: string
