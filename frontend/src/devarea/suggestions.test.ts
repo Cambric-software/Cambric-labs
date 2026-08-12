@@ -87,6 +87,48 @@ describe('generateTests', () => {
     const fooTests = tests.filter((t) => t.title === 'foo works')
     expect(fooTests.length).toBe(1)
   })
+
+  it('detects Python async functions and emits async/await test', () => {
+    const code = `async def fetch_data(url):\n    return await get(url)`
+    const tests = generateTests({ code, languageId: 'python' })
+    expect(tests.length).toBe(1)
+    expect(tests[0].title).toBe('test_fetch_data')
+    expect(tests[0].code).toContain('async def test_fetch_data')
+    expect(tests[0].code).toContain('await fetch_data')
+  })
+
+  it('does not duplicate Python tests for redefined functions', () => {
+    const code = `def foo():\n    return 1\n\ndef foo():\n    return 2`
+    const tests = generateTests({ code, languageId: 'python' })
+    expect(tests.length).toBe(1)
+  })
+
+  it('emits async test for async JS named function', () => {
+    const code = `async function loadData(id) { return fetch(id); }`
+    const tests = generateTests({ code, languageId: 'javascript' })
+    expect(tests.length).toBe(1)
+    expect(tests[0].code).toContain('async ()')
+    expect(tests[0].code).toContain('await loadData')
+  })
+
+  it('emits async test for async arrow function', () => {
+    const code = `const getData = async (id) => { return fetch(id); };`
+    const tests = generateTests({ code, languageId: 'typescript' })
+    expect(tests.length).toBe(1)
+    expect(tests[0].code).toContain('async ()')
+    expect(tests[0].code).toContain('await getData')
+  })
+
+  it('handles malformed code without throwing', () => {
+    const code = `def (\n  broken`
+    expect(() => generateTests({ code, languageId: 'python' })).not.toThrow()
+    expect(() => generateTests({ code, languageId: 'javascript' })).not.toThrow()
+  })
+
+  it('handles empty string without throwing', () => {
+    expect(() => generateTests({ code: '', languageId: 'python' })).not.toThrow()
+    expect(generateTests({ code: '', languageId: 'javascript' })).toEqual([])
+  })
 })
 
 describe('compareLanguages', () => {
