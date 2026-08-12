@@ -13,6 +13,7 @@ import { COMMON_ANALYZERS } from './analyzers/common'
 import { SQL_ANALYZERS } from './analyzers/sql'
 import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 import { ERROR_ANALYZERS } from './analyzers/errors'
+import { SECURITY_ANALYZERS } from './analyzers/security'
 
 let registered = false
 
@@ -23,7 +24,7 @@ export function registerDevAreaAnalyzers(): void {
   for (const analyzer of [
     ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
     ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
-    ...ERROR_ANALYZERS,
+    ...ERROR_ANALYZERS, ...SECURITY_ANALYZERS,
   ]) {
     registerAnalyzer(analyzer)
   }
@@ -44,3 +45,4 @@ export { COMMON_ANALYZERS } from './analyzers/common'
 export { SQL_ANALYZERS } from './analyzers/sql'
 export { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 export { ERROR_ANALYZERS } from './analyzers/errors'
+export { SECURITY_ANALYZERS } from './analyzers/security'

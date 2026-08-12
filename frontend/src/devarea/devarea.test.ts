@@ -14,12 +14,13 @@ import { COMMON_ANALYZERS } from './analyzers/common'
 import { SQL_ANALYZERS } from './analyzers/sql'
 import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 import { ERROR_ANALYZERS } from './analyzers/errors'
+import { SECURITY_ANALYZERS } from './analyzers/security'
 
 function registerAll() {
   for (const a of [
     ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
     ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
-    ...ERROR_ANALYZERS,
+    ...ERROR_ANALYZERS, ...SECURITY_ANALYZERS,
   ]) {
     registerAnalyzer(a)
   }
@@ -288,5 +289,79 @@ describe('error analyzers', () => {
     const results = runAnalysis({ code, languageId: 'javascript' })
     const summary = summarizeByCategory(results)
     expect(summary.error).toBeGreaterThan(0)
+  })
+})
+
+describe('security analyzers', () => {
+  beforeEach(registerAll)
+
+  it('detects XSS via innerHTML with dynamic content', () => {
+    const code = `el.innerHTML = userInput`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-xss-innerhtml')).toBe(true)
+  })
+
+  it('does not flag innerHTML with a static string literal', () => {
+    const code = `el.innerHTML = '<p>static</p>'`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-xss-innerhtml')).toBe(false)
+  })
+
+  it('detects command injection via exec with concatenation', () => {
+    const code = `exec('ls ' + userInput)`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-command-injection')).toBe(true)
+  })
+
+  it('does not flag exec with a static command', () => {
+    const code = `exec('ls -la')`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-command-injection')).toBe(false)
+  })
+
+  it('detects path traversal via readFile with concatenation', () => {
+    const code = `fs.readFile('/data/' + req.query.name, cb)`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-path-traversal')).toBe(true)
+  })
+
+  it('does not flag readFile with a static path', () => {
+    const code = `fs.readFile('/data/config.json', cb)`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-path-traversal')).toBe(false)
+  })
+
+  it('detects weak crypto MD5', () => {
+    const code = `const h = crypto.createHash('md5').update(pw).digest('hex')`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-weak-crypto')).toBe(true)
+  })
+
+  it('detects weak crypto SHA1 in Python', () => {
+    const code = `import hashlib\nh = hashlib.sha1(pw.encode()).hexdigest()`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-weak-crypto')).toBe(true)
+  })
+
+  it('detects open redirect', () => {
+    const code = `app.get('/go', (req, res) => res.redirect(req.query.next))`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'sec-open-redirect')).toBe(true)
+  })
+
+  it('security category is populated for XSS code', () => {
+    const code = `el.innerHTML = userInput`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const summary = summarizeByCategory(results)
+    expect(summary.security).toBeGreaterThan(0)
   })
 })
