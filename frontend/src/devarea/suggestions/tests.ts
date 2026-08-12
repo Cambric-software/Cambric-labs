@@ -28,6 +28,7 @@ function detectFunctions(code: string, languageId: string): DetectedFunction[] {
       functions.push({ name: match[1], params })
     }
   } else if (languageId === 'javascript' || languageId === 'typescript') {
+    // named function declarations: function foo(a, b) { ... }
     const regex = /function\s+(\w+)\s*\(([^)]*)\)/g
     let match: RegExpExecArray | null
     while ((match = regex.exec(code)) !== null) {
@@ -36,6 +37,31 @@ function detectFunctions(code: string, languageId: string): DetectedFunction[] {
         .map((p) => p.split(':')[0].split('=')[0].trim())
         .filter((p) => p)
       functions.push({ name: match[1], params })
+    }
+    // arrow functions assigned to a const: const foo = (a, b) => { ... }
+    const arrowRegex = /(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*(?::\s*[^=]*)?=>/g
+    while ((match = arrowRegex.exec(code)) !== null) {
+      const name = match[1]
+      // skip duplicates already found as a named function
+      if (functions.some((f) => f.name === name)) continue
+      const params = match[2]
+        .split(',')
+        .map((p) => p.split(':')[0].split('=')[0].trim())
+        .filter((p) => p)
+      functions.push({ name, params })
+    }
+    // class methods: method(args) { ... } inside a class body
+    const methodRegex = /^\s*(?:public|private|protected|static|async)?\s*(\w+)\s*\(([^)]*)\)\s*(?::\s*[^{]*)?\{/gm
+    while ((match = methodRegex.exec(code)) !== null) {
+      const name = match[1]
+      // skip constructor-like and already-found
+      if (name === 'if' || name === 'while' || name === 'for' || name === 'switch') continue
+      if (functions.some((f) => f.name === name)) continue
+      const params = match[2]
+        .split(',')
+        .map((p) => p.split(':')[0].split('=')[0].trim())
+        .filter((p) => p && p !== 'this')
+      functions.push({ name, params })
     }
   }
   return functions

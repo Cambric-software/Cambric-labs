@@ -56,6 +56,37 @@ describe('generateTests', () => {
     const tests = generateTests({ code, languageId: 'javascript' })
     expect(tests).toEqual([])
   })
+
+  it('detects arrow functions assigned to a const', () => {
+    const code = `const add = (a, b) => {\n  return a + b;\n};`
+    const tests = generateTests({ code, languageId: 'typescript' })
+    expect(tests.length).toBe(1)
+    expect(tests[0].title).toBe('add works')
+    expect(tests[0].code).toContain('add(undefined, undefined)')
+  })
+
+  it('detects async arrow functions', () => {
+    const code = `const fetchData = async (url) => {\n  return fetch(url);\n};`
+    const tests = generateTests({ code, languageId: 'javascript' })
+    expect(tests.length).toBe(1)
+    expect(tests[0].title).toBe('fetchData works')
+  })
+
+  it('detects both named and arrow functions', () => {
+    const code = `function greet(name) { return name; }\nconst farewell = (name) => { return 'bye ' + name; };`
+    const tests = generateTests({ code, languageId: 'javascript' })
+    expect(tests.length).toBe(2)
+    const names = tests.map((t) => t.title)
+    expect(names).toContain('greet works')
+    expect(names).toContain('farewell works')
+  })
+
+  it('does not duplicate tests for the same function name', () => {
+    const code = `function foo() { return 1; }\nconst foo = () => 2;`
+    const tests = generateTests({ code, languageId: 'javascript' })
+    const fooTests = tests.filter((t) => t.title === 'foo works')
+    expect(fooTests.length).toBe(1)
+  })
 })
 
 describe('compareLanguages', () => {
