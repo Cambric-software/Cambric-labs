@@ -16,12 +16,14 @@ import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 import { ERROR_ANALYZERS } from './analyzers/errors'
 import { SECURITY_ANALYZERS } from './analyzers/security'
 import { PERFORMANCE_ANALYZERS } from './analyzers/performance'
+import { MAINTAINABILITY_ANALYZERS } from './analyzers/maintainability'
 
 function registerAll() {
   for (const a of [
     ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
     ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
     ...ERROR_ANALYZERS, ...SECURITY_ANALYZERS, ...PERFORMANCE_ANALYZERS,
+    ...MAINTAINABILITY_ANALYZERS,
   ]) {
     registerAnalyzer(a)
   }
@@ -431,5 +433,75 @@ describe('performance analyzers', () => {
     const results = runAnalysis({ code, languageId: 'javascript' })
     const summary = summarizeByCategory(results)
     expect(summary.performance).toBeGreaterThan(0)
+  })
+})
+
+describe('maintainability analyzers', () => {
+  beforeEach(registerAll)
+
+  it('detects magic number 86400 in JS', () => {
+    const code = `if (seconds > 86400) { return; }`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-magic-number')).toBe(true)
+  })
+
+  it('does not flag small numbers 0 and 1', () => {
+    const code = `const x = 0;\nconst y = 1;`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-magic-number')).toBe(false)
+  })
+
+  it('does not flag numbers in a const declaration', () => {
+    const code = `const SECONDS_PER_DAY = 86400;`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-magic-number')).toBe(false)
+  })
+
+  it('detects oversized function (60+ lines)', () => {
+    const lines = ['function big() {']
+    for (let i = 0; i < 58; i++) lines.push(`  let v${i} = ${i};`)
+    lines.push('}')
+    const code = lines.join('\n')
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-huge-function')).toBe(true)
+  })
+
+  it('does not flag a short function', () => {
+    const code = `function small() {\n  return 1;\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-huge-function')).toBe(false)
+  })
+
+  it('detects deep nesting (5 levels)', () => {
+    const code = `function f() {\n  if (a) {\n    if (b) {\n      if (c) {\n        if (d) {\n          if (e) {\n            return 1;\n          }\n        }\n      }\n    }\n  }\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-deep-nesting')).toBe(true)
+  })
+
+  it('detects commented-out code block (5+ lines)', () => {
+    const code = `// const x = 1;\n// const y = 2;\n// const z = 3;\n// const w = 4;\n// const v = 5;`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-dead-code-block')).toBe(true)
+  })
+
+  it('does not flag a TODO comment', () => {
+    const code = `// TODO: fix this later`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'maint-dead-code-block')).toBe(false)
+  })
+
+  it('maintainability category is populated for magic number', () => {
+    const code = `if (seconds > 86400) { return; }`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const summary = summarizeByCategory(results)
+    expect(summary.maintainability).toBeGreaterThan(0)
   })
 })

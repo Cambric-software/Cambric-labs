@@ -15,6 +15,7 @@ import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 import { ERROR_ANALYZERS } from './analyzers/errors'
 import { SECURITY_ANALYZERS } from './analyzers/security'
 import { PERFORMANCE_ANALYZERS } from './analyzers/performance'
+import { MAINTAINABILITY_ANALYZERS } from './analyzers/maintainability'
 
 let registered = false
 
@@ -26,6 +27,7 @@ export function registerDevAreaAnalyzers(): void {
     ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
     ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
     ...ERROR_ANALYZERS, ...SECURITY_ANALYZERS, ...PERFORMANCE_ANALYZERS,
+    ...MAINTAINABILITY_ANALYZERS,
   ]) {
     registerAnalyzer(analyzer)
   }
@@ -48,3 +50,4 @@ export { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 export { ERROR_ANALYZERS } from './analyzers/errors'
 export { SECURITY_ANALYZERS } from './analyzers/security'
 export { PERFORMANCE_ANALYZERS } from './analyzers/performance'
+export { MAINTAINABILITY_ANALYZERS } from './analyzers/maintainability'
