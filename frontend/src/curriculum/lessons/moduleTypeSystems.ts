@@ -139,11 +139,11 @@ export const typeSystemsLessons: LessonDetail[] = [
       type: 'compare',
       title: 'When is the type error caught?',
       steps: [
-        { caption: 'Dynamic (Python): you write `greet(42)`. The program starts. The correct lines run fine.' },
-        { caption: 'Execution reaches `greet(42)`. Python tries to concatenate "Hello, " + 42. TypeError — the program crashes, in production, the first time this path runs.' },
-        { caption: 'Static (TypeScript): you write `greet(42)`. The compiler checks every call against the declared type BEFORE producing a runnable program.' },
-        { caption: 'The compiler sees `greet(42)` but `name: string`. It refuses to emit JavaScript. The bug cannot ship — even if the line is in untested code — because the program never existed with the bug in it.' },
-        { caption: 'Same logic error, opposite outcomes. Static typing trades upfront annotation for the guarantee that a whole class of runtime type errors is impossible.' },
+        { caption: 'Dynamic (Python): you write `greet(42)`. The program starts. The correct lines run fine.', payload: { side: 'left', sideLabel: 'Dynamic (Python)' } },
+        { caption: 'Execution reaches `greet(42)`. Python tries to concatenate "Hello, " + 42. TypeError — the program crashes, in production, the first time this path runs.', payload: { side: 'left', sideLabel: 'Dynamic (Python)' } },
+        { caption: 'Static (TypeScript): you write `greet(42)`. The compiler checks every call against the declared type BEFORE producing a runnable program.', payload: { side: 'right', sideLabel: 'Static (TypeScript)' } },
+        { caption: 'The compiler sees `greet(42)` but `name: string`. It refuses to emit JavaScript. The bug cannot ship — even if the line is in untested code — because the program never existed with the bug in it.', payload: { side: 'right', sideLabel: 'Static (TypeScript)' } },
+        { caption: 'Same logic error, opposite outcomes. Static typing trades upfront annotation for the guarantee that a whole class of runtime type errors is impossible.', payload: { side: 'both' } },
       ],
     },
     activity: {
@@ -344,11 +344,11 @@ export const typeSystemsLessons: LessonDetail[] = [
       type: 'compare',
       title: 'Same expression, different outcomes',
       steps: [
-        { caption: 'JavaScript (weak): "1" + 1. The + operator sees a string, coerces the number 1 to string "1", concatenates. Result: "11" — a string, not a number.' },
-        { caption: 'Python (strong): "1" + 1. Python refuses to convert string to int silently. TypeError — the program stops, forcing you to write int("1") + 1 explicitly.' },
-        { caption: 'C (static + weak): short s = 100000. The compiler knows the types, but silently truncates 100000 to fit a short. No error; the value silently corrupts to -31072. The bug is invisible.' },
-        { caption: 'Rust (static + strong): let s: i16 = 100000; The compiler refuses: "literal out of range for i16". The bug is impossible — the code does not compile.' },
-        { caption: 'The lesson: strong typing refuses silent conversion, making behavior predictable. Weak typing silently picks a conversion, and the result depends on rules you must memorize. Static vs dynamic is when; strong vs weak is how much the language silently rewrites your values.' },
+        { caption: 'JavaScript (weak): "1" + 1. The + operator sees a string, coerces the number 1 to string "1", concatenates. Result: "11" — a string, not a number.', payload: { side: 'left', sideLabel: 'Weak (JS)' } },
+        { caption: 'Python (strong): "1" + 1. Python refuses to convert string to int silently. TypeError — the program stops, forcing you to write int("1") + 1 explicitly.', payload: { side: 'right', sideLabel: 'Strong (Python)' } },
+        { caption: 'C (static + weak): short s = 100000. The compiler knows the types, but silently truncates 100000 to fit a short. No error; the value silently corrupts to -31072. The bug is invisible.', payload: { side: 'left', sideLabel: 'Static + Weak (C)' } },
+        { caption: 'Rust (static + strong): let s: i16 = 100000; The compiler refuses: "literal out of range for i16". The bug is impossible — the code does not compile.', payload: { side: 'right', sideLabel: 'Static + Strong (Rust)' } },
+        { caption: 'The lesson: strong typing refuses silent conversion, making behavior predictable. Weak typing silently picks a conversion, and the result depends on rules you must memorize. Static vs dynamic is when; strong vs weak is how much the language silently rewrites your values.', payload: { side: 'both' } },
       ],
     },
     activity: {

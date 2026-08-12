@@ -157,10 +157,10 @@ export const memoryModelsLessons: LessonDetail[] = [
       type: 'compare',
       title: 'Three ways to free memory',
       steps: [
-        { caption: 'C (manual): you call malloc(100), get a pointer. You use it. You call free(ptr). If you or anyone else uses ptr afterward — use-after-free, memory corruption. The bug is yours to make and yours to find.' },
-        { caption: 'Python (GC): the list object is allocated. References point to it. When the last reference is dropped, the object is unreachable. The garbage collector traces from roots, finds it unreachable, and frees it — automatically, at some later point. You never call free.' },
-        { caption: 'Rust (ownership): the String is allocated, owned by s1. Ownership moves to s2. The compiler knows s1 is now invalid (forbids its use). When s2\'s scope ends, the compiler inserts the free — deterministically, at compile time. No GC pause, no use-after-free, no manual free.' },
-        { caption: 'The tradeoff: C gives control and danger. GC gives safety and runtime cost. Ownership gives safety and control but requires you to learn the ownership rules. Each eliminates different bug classes and accepts different costs.' },
+        { caption: 'C (manual): you call malloc(100), get a pointer. You use it. You call free(ptr). If you or anyone else uses ptr afterward — use-after-free, memory corruption. The bug is yours to make and yours to find.', payload: { side: 'left', sideLabel: 'Manual (C)' } },
+        { caption: 'Python (GC): the list object is allocated. References point to it. When the last reference is dropped, the object is unreachable. The garbage collector traces from roots, finds it unreachable, and frees it — automatically, at some later point. You never call free.', payload: { side: 'right', sideLabel: 'GC (Python)' } },
+        { caption: 'Rust (ownership): the String is allocated, owned by s1. Ownership moves to s2. The compiler knows s1 is now invalid (forbids its use). When s2\'s scope ends, the compiler inserts the free — deterministically, at compile time. No GC pause, no use-after-free, no manual free.', payload: { side: 'right', sideLabel: 'Ownership (Rust)' } },
+        { caption: 'The tradeoff: C gives control and danger. GC gives safety and runtime cost. Ownership gives safety and control but requires you to learn the ownership rules. Each eliminates different bug classes and accepts different costs.', payload: { side: 'both' } },
       ],
     },
     activity: {
