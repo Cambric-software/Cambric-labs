@@ -244,9 +244,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: var(--lab-space-3);
   margin-bottom: var(--lab-space-8);
   padding-bottom: var(--lab-space-4);
   border-bottom: 1px solid var(--lab-border);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--lab-space-1);
+  font-size: var(--lab-text-xs);
+  color: var(--lab-text-muted);
+  font-family: var(--lab-font-mono);
+}
+
+.breadcrumb span {
+  white-space: nowrap;
 }
 
 .backBtn {

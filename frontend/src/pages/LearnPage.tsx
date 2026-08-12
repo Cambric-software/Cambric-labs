@@ -214,10 +214,28 @@ function LessonView({ lessonId }: { lessonId: string }) {
     return () => { active = false }
   }, [lessonId])
 
-  // Build ordered lesson list for prev/next within the whole registry.
+  // Build a sequential learning path: lessons ordered by their position
+  // within modules, modules within courses, courses within tracks, tracks
+  // by their registration order. This gives coherent prev/next navigation
+  // (the next lesson is the one after the current in the same module,
+  // or the first lesson of the next module) rather than jumping globally.
   const orderedStubs = useMemo(() => {
-    const all = Object.values(registry.lessonIndex)
-    return all.sort((a, b) => a.difficulty - b.difficulty || a.estimatedMinutes - b.estimatedMinutes)
+    const tracks = Object.values(registry.tracks)
+    const ordered: { id: string }[] = []
+    for (const track of tracks) {
+      for (const courseId of track.courseIds) {
+        const course = registry.courses[courseId]
+        if (!course) continue
+        for (const moduleId of course.moduleIds) {
+          const mod = registry.modules[moduleId]
+          if (!mod) continue
+          for (const lid of mod.lessonIds) {
+            if (registry.lessonIndex[lid]) ordered.push({ id: lid })
+          }
+        }
+      }
+    }
+    return ordered
   }, [registry])
 
   const currentIndex = orderedStubs.findIndex((s) => s.id === lessonId)
@@ -225,6 +243,26 @@ function LessonView({ lessonId }: { lessonId: string }) {
   const nextLesson = currentIndex >= 0 && currentIndex < orderedStubs.length - 1
     ? orderedStubs[currentIndex + 1]
     : undefined
+
+  // Locate the lesson's position in the track/course/module hierarchy for
+  // a breadcrumb so the learner knows where they are.
+  const breadcrumb = useMemo(() => {
+    if (!lesson) return null
+    for (const track of Object.values(registry.tracks)) {
+      for (const courseId of track.courseIds) {
+        const course = registry.courses[courseId]
+        if (!course) continue
+        for (const moduleId of course.moduleIds) {
+          const mod = registry.modules[moduleId]
+          if (!mod) continue
+          if (mod.lessonIds.includes(lesson.id)) {
+            return { track: track.title, course: course.title, module: mod.title }
+          }
+        }
+      }
+    }
+    return null
+  }, [lesson, registry])
 
   if (lesson === undefined) {
     return <div className={styles.lessonPage}><p className={styles.loading}>Loading lesson…</p></div>
@@ -247,6 +285,16 @@ function LessonView({ lessonId }: { lessonId: string }) {
         <button onClick={() => navigate('/cambric-labs/learn')} className={styles.backBtn}>
           <ChevronLeft size={20} /> Back to Curriculum
         </button>
+
+        {breadcrumb && (
+          <div className={styles.breadcrumb}>
+            <span>{breadcrumb.track}</span>
+            <ChevronRight size={12} />
+            <span>{breadcrumb.course}</span>
+            <ChevronRight size={12} />
+            <span>{breadcrumb.module}</span>
+          </div>
+        )}
 
         <div className={styles.lessonNav}>
           {prevLesson && (
