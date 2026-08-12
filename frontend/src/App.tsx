@@ -4,6 +4,7 @@ import { HomePage } from './pages/HomePage'
 import LabPage from './pages/LabPage'
 import { LearnPage } from './pages/LearnPage'
 import { AdminPage } from './pages/AdminPage'
+import { ValidatePage } from './pages/ValidatePage'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/cambric-labs/learn" element={<LearnPage />} />
         <Route path="/cambric-labs/learn/:lessonId" element={<LearnPage />} />
         <Route path="/cambric-labs/admin" element={<AdminPage />} />
+        <Route path="/cambric-labs/validate" element={<ValidatePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
