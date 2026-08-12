@@ -29,6 +29,7 @@ import { lessonVariablesIntro } from './lessonVariablesIntro'
 import { lessonVariablesTypes } from './lessonVariablesTypes'
 import { lessonConditionals } from './lessonConditionals'
 import { lessonLoops } from './lessonLoops'
+import { lessonLoopControl } from './lessonLoopControl'
 import { lessonBooleanOperators } from './lessonBooleanOperators'
 import { lessonFunctionsIntro } from './lessonFunctionsIntro'
 import { lessonRecursion } from './lessonRecursion'
@@ -134,6 +135,7 @@ export function registerCurriculum(): void {
     lessonVariablesTypes,
     lessonConditionals,
     lessonLoops,
+    lessonLoopControl,
     lessonBooleanOperators,
     lessonFunctionsIntro,
     lessonRecursion,
