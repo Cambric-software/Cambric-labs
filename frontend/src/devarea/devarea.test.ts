@@ -15,12 +15,13 @@ import { SQL_ANALYZERS } from './analyzers/sql'
 import { HTML_ANALYZERS, CSS_ANALYZERS } from './analyzers/htmlCss'
 import { ERROR_ANALYZERS } from './analyzers/errors'
 import { SECURITY_ANALYZERS } from './analyzers/security'
+import { PERFORMANCE_ANALYZERS } from './analyzers/performance'
 
 function registerAll() {
   for (const a of [
     ...JAVASCRIPT_ANALYZERS, ...PYTHON_ANALYZERS, ...TYPESCRIPT_ANALYZERS,
     ...COMMON_ANALYZERS, ...SQL_ANALYZERS, ...HTML_ANALYZERS, ...CSS_ANALYZERS,
-    ...ERROR_ANALYZERS, ...SECURITY_ANALYZERS,
+    ...ERROR_ANALYZERS, ...SECURITY_ANALYZERS, ...PERFORMANCE_ANALYZERS,
   ]) {
     registerAnalyzer(a)
   }
@@ -363,5 +364,72 @@ describe('security analyzers', () => {
     const results = runAnalysis({ code, languageId: 'javascript' })
     const summary = summarizeByCategory(results)
     expect(summary.security).toBeGreaterThan(0)
+  })
+})
+
+describe('performance analyzers', () => {
+  beforeEach(registerAll)
+
+  it('detects nested loop (quadratic risk) in JS', () => {
+    const code = `for (let i = 0; i < n; i++) {\n  for (let j = 0; j < n; j++) {\n    sum += a[i][j];\n  }\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-nested-loop')).toBe(true)
+  })
+
+  it('does not flag a single loop', () => {
+    const code = `for (let i = 0; i < n; i++) {\n  sum += i;\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-nested-loop')).toBe(false)
+  })
+
+  it('detects list concatenation in Python loop', () => {
+    const code = `for x in items:\n    result = result + [x]`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-list-concat-in-loop')).toBe(true)
+  })
+
+  it('does not flag list.append in loop', () => {
+    const code = `for x in items:\n    result.append(x)`
+    const results = runAnalysis({ code, languageId: 'python' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-list-concat-in-loop')).toBe(false)
+  })
+
+  it('detects sequential await in JS loop', () => {
+    const code = `for (const id of ids) {\n  const r = await fetch('/api/' + id);\n  results.push(r);\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-sequential-await-in-loop')).toBe(true)
+  })
+
+  it('does not flag Promise.all await', () => {
+    const code = `for (const id of ids) {\n  promises.push(fetch('/api/' + id));\n}\nconst results = await Promise.all(promises);`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-sequential-await-in-loop')).toBe(false)
+  })
+
+  it('detects RegExp constructed in loop', () => {
+    const code = `for (const line of lines) {\n  const re = new RegExp(pattern);\n  if (re.test(line)) found++;\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-regex-in-loop')).toBe(true)
+  })
+
+  it('does not flag RegExp outside loop', () => {
+    const code = `const re = new RegExp(pattern);\nfor (const line of lines) {\n  if (re.test(line)) found++;\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const findings = flattenFindings(results)
+    expect(findings.some((f) => f.ruleId === 'perf-regex-in-loop')).toBe(false)
+  })
+
+  it('performance category is populated for nested loop', () => {
+    const code = `for (let i = 0; i < n; i++) {\n  for (let j = 0; j < n; j++) {\n    sum += 1;\n  }\n}`
+    const results = runAnalysis({ code, languageId: 'javascript' })
+    const summary = summarizeByCategory(results)
+    expect(summary.performance).toBeGreaterThan(0)
   })
 })
