@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -61,7 +61,7 @@ jobs:
           echo "=== Verifying Windows Executables ==="
           echo "Release files:"
           Get-ChildItem electron/release -Filter "*.exe" -Recurse | Select-Object Name, Length, LastWriteTime
-          
+
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
@@ -87,7 +87,7 @@ jobs:
     concurrency:
       group: release-${{ github.ref }}
       cancel-in-progress: false
-    
+
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -97,20 +97,16 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R artifacts
 
-      - name: Delete existing release if exists
-        run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" \
-            https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }})
-          if [ "$RESPONSE" = "200" ]; then
-            echo "Release exists, deleting..."
-            gh release delete ${{ github.ref_name }} --yes -R ${{ github.repository }}
-          else
-            echo "No existing release found (HTTP $RESPONSE)"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # NOTE: the previous "delete existing release if exists" step was
+      # removed here. It force-deleted the release for this tag before
+      # recreating it, which is exactly what let the Windows and Android
+      # workflows stomp on each other's uploaded assets (whichever
+      # workflow's create-release job ran last would wipe out the other's
+      # file). softprops/action-gh-release already creates the release if
+      # it doesn't exist, or updates it in place (adding these files) if it
+      # does -- so deleting first was both unnecessary and destructive.
 
-      - name: Create Release
+      - name: Create or update Release
         uses: softprops/action-gh-release@v1
         with:
           draft: false
@@ -119,12 +115,12 @@ jobs:
             artifacts/**/*.exe
           body: |
             ## CAMBRIC LABS v${{ github.ref_name }}
-            
+
             ### Downloads
             - **Windows Installer**: CAMBRIC-LABS-*-Setup.exe
             - **Windows Portable**: CAMBRIC-LABS-*-portable.exe (no installation required)
             - **Android**: Cambric-Labs-Android-*.apk
-            
+
             ### Features
             - Local neural network training (no internet required)
             - Create and train neural networks
@@ -132,26 +128,26 @@ jobs:
             - Export trained models
             - Works completely offline
             - No account required
-            
+
             ### System Requirements
-            
+
             **Windows:**
             - Windows 10 or later
             - 4GB RAM minimum
             - 200MB disk space
-            
+
             **Android:**
             - Android 7.0 (API 24) or later
             - 2GB RAM minimum
             - 100MB storage space
-            
+
             ### Installation
-            
+
             **Windows:**
             1. Download the installer or portable version
             2. Run the installer (or extract the portable version)
             3. Launch CAMBRIC LABS
-            
+
             **Android:**
             1. Download the APK to your Android device
             2. Enable "Install from unknown sources" in settings
