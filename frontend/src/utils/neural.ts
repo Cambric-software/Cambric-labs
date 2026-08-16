@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Neural Network Engine for CAMBRIC LABS
  * Advanced implementation with multiple optimizers, regularization, and full control
  */
@@ -624,6 +624,34 @@ export class NeuralNetwork {
   getBias(neuronIdx: number): number {
     return this.biases[neuronIdx]
   }
+
+  /**
+   * Get full forward-pass details for a single neuron, for visualization
+   * (e.g. ForwardPassAnimation / NeuronVisualization). Call forward() first
+   * so the cache reflects the inputs you want to visualize.
+   */
+  getNeuronSnapshot(layerIndex: number, neuronIndexInLayer: number): {
+    inputs: number[]
+    weights: number[]
+    bias: number
+    activation: ActivationName
+    weightedSum: number
+    output: number
+  } {
+    if (this.lastLayerInputs.length === 0) {
+      throw new Error('Call forward() before getNeuronSnapshot() so the cache is populated')
+    }
+    const layer = this.layerConfigs[layerIndex]
+    const neuronIdx = this.getLayerStartIndex(layerIndex) + neuronIndexInLayer
+    return {
+      inputs: [...this.lastLayerInputs[layerIndex]],
+      weights: [...this.weights[neuronIdx]],
+      bias: this.biases[neuronIdx],
+      activation: layer.activation,
+      weightedSum: this.lastWeightedSums[neuronIdx],
+      output: this.lastOutputs[neuronIdx]
+    }
+  }
 }
 
 /**
@@ -653,14 +681,26 @@ export function createNetwork(
   optimizer: OptimizerName = 'sgd',
   learningRate: number = 0.01
 ): NeuralNetwork {
+  // IMPORTANT: an explicit output layer must be appended here. Previously the
+  // network's real output was just whatever the last hidden layer produced,
+  // which silently diverged from outputDim (e.g. default layers [4, 2] with
+  // outputDim 1 produced a 2-value output while training only supplied 1
+  // target value -> NaN gradients that poisoned every earlier layer).
   return new NeuralNetwork({
     inputDim,
     outputDim,
-    layers: hiddenLayers.map((layer, i) => ({
-      name: `Layer ${i + 1}`,
-      neuronCount: layer.neuronCount,
-      activation: layer.activation as ActivationName
-    })),
+    layers: [
+      ...hiddenLayers.map((layer, i) => ({
+        name: `Layer ${i + 1}`,
+        neuronCount: layer.neuronCount,
+        activation: layer.activation as ActivationName
+      })),
+      {
+        name: 'Output',
+        neuronCount: outputDim,
+        activation: 'identity' as ActivationName
+      }
+    ],
     optimizer,
     learningRate
   })

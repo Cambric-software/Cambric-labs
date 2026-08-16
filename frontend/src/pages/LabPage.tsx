@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { 
   Zap, Play, RotateCcw, Plus, Minus, Trash2, Save, 
-  TrendingDown, Layers, Download, Home, Database
+  TrendingDown, Layers, Download, Home, Database, Eye
 } from 'lucide-react'
 import { NeuralNetwork, createNetwork } from '../utils/neural'
 import { experimentStorage } from '../utils/storage'
+import { ForwardPassAnimation } from '../components/ForwardPassAnimation'
 import styles from './LabPage.module.css'
 
 interface DatasetExample {
@@ -48,6 +49,20 @@ export default function LabPage() {
   const [activeTab, setActiveTab] = useState<'train' | 'data' | 'network'>('train')
   
   const trainingRef = useRef<number | null>(null)
+
+  const [watchNeuron, setWatchNeuron] = useState<{ layerIndex: number; neuronIndex: number } | null>(null)
+
+  // Runs a forward pass with the current inputs and pulls out one neuron's
+  // full computation, for the ForwardPassAnimation modal below.
+  const watchSnapshot = useMemo(() => {
+    if (!watchNeuron || !network) return null
+    try {
+      network.forward(inputs)
+      return network.getNeuronSnapshot(watchNeuron.layerIndex, watchNeuron.neuronIndex)
+    } catch {
+      return null
+    }
+  }, [watchNeuron, network, inputs])
 
   const createNewNetwork = () => {
     const net = createNetwork(inputCount, layers, 1, optimizer, learningRate)
@@ -356,13 +371,13 @@ export default function LabPage() {
                 <div className={styles.resultItem}>
                   <span className={styles.resultLabel}>Prediction</span>
                   <span className={styles.resultValue}>
-                    {output !== null ? output.toFixed(4) : '—'}
+                    {output !== null ? output.toFixed(4) : 'â€”'}
                   </span>
                 </div>
                 <div className={styles.resultItem}>
                   <span className={styles.resultLabel}>Loss</span>
                   <span className={styles.resultValue}>
-                    {lastLoss !== null ? lastLoss.toFixed(6) : '—'}
+                    {lastLoss !== null ? lastLoss.toFixed(6) : 'â€”'}
                   </span>
                 </div>
                 <div className={styles.resultItem}>
@@ -465,7 +480,7 @@ export default function LabPage() {
                 <div className={styles.infoItem}>
                   <span>Weight Range</span>
                   <span>
-                    {stats ? `${stats.weightMin.toFixed(2)} to ${stats.weightMax.toFixed(2)}` : '—'}
+                    {stats ? `${stats.weightMin.toFixed(2)} to ${stats.weightMax.toFixed(2)}` : 'â€”'}
                   </span>
                 </div>
               </div>
@@ -582,6 +597,18 @@ export default function LabPage() {
                     <option value="identity">Identity</option>
                   </select>
                 </div>
+                <div className={styles.layerControls}>
+                  {Array.from({ length: layer.neuronCount }).map((_, n) => (
+                    <button
+                      key={n}
+                      className={styles.btnSmall}
+                      onClick={() => setWatchNeuron({ layerIndex: idx, neuronIndex: n })}
+                      title={`Watch neuron ${n + 1} of Layer ${idx + 1}`}
+                    >
+                      <Eye size={12} /> N{n + 1}
+                    </button>
+                  ))}
+                </div>
               </section>
             ))}
 
@@ -591,6 +618,16 @@ export default function LabPage() {
           </div>
         )}
       </main>
+
+      {watchSnapshot && (
+        <ForwardPassAnimation
+          inputs={watchSnapshot.inputs}
+          weights={watchSnapshot.weights}
+          bias={watchSnapshot.bias}
+          activation={watchSnapshot.activation}
+          onClose={() => setWatchNeuron(null)}
+        />
+      )}
     </div>
   )
 }
