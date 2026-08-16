@@ -80,7 +80,6 @@ export class Layer {
   neurons: Neuron[];
 
   private lastInputs: number[] | null = null;
-  private lastOutputs: number[] | null = null;
   private lastGradients: GradientResult[] | null = null;
 
   constructor(opts: {
@@ -144,8 +143,6 @@ export class Layer {
         bias: result.bias,
       });
     });
-
-    this.lastOutputs = outputs;
 
     return {
       outputs,
@@ -270,7 +267,6 @@ export class Layer {
   /** Resets temporary cache; preserves learned parameters. */
   resetCache(): void {
     this.lastInputs = null;
-    this.lastOutputs = null;
     this.lastGradients = null;
     this.neurons.forEach((n) => n.resetCache());
   }

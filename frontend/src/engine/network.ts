@@ -84,9 +84,7 @@ export class Network {
   /** Optional: append {epoch, loss, ...} entries here from your training loop. */
   history: Record<string, unknown>[] = [];
 
-  private lastInputs: number[] | null = null;
   private layerOutputs: number[][] = [];
-  private currentPrediction: number[] | null = null;
 
   constructor(opts: { name?: string; layers?: Layer[]; lossFunction?: string } = {}) {
     this.name = opts.name ?? 'Network';
@@ -119,7 +117,6 @@ export class Network {
   }
 
   forward(inputs: number[]): NetworkForwardResult {
-    this.lastInputs = [...inputs];
     let currentInput = inputs;
     const layerOutputs: number[][] = [];
     const allActivations: NetworkForwardResult['allActivations'] = [];
@@ -140,7 +137,6 @@ export class Network {
     });
 
     this.layerOutputs = layerOutputs;
-    this.currentPrediction = currentInput;
 
     return {
       output: currentInput,
@@ -254,7 +250,6 @@ export class Network {
   resetCache(): void {
     this.layers.forEach((l) => l.resetCache());
     this.layerOutputs = [];
-    this.currentPrediction = null;
   }
 
   resetParameters(seed?: number): void {
