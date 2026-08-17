@@ -38,6 +38,13 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Copy frontend build into electron/dist
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path electron/dist
+          Copy-Item -Path docs/app/* -Destination electron/dist -Recurse -Force
+          Get-ChildItem electron/dist
+
       - name: Install Electron dependencies
         run: |
           cd electron
