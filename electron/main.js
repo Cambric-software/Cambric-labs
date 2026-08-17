@@ -32,7 +32,7 @@ function createWindow() {
   // Load the app
   if (app.isPackaged) {
     // Production: Load from installed files
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
   } else {
     // Development: Load from built frontend
     mainWindow.loadFile(path.join(__dirname, '../docs/index.html'));
