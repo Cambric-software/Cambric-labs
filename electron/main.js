@@ -5,12 +5,12 @@
  */
 
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 
 // Keep a global reference of the window object
 let mainWindow;
-
 
 function createWindow() {
   // Create the browser window
@@ -31,7 +31,10 @@ function createWindow() {
 
   // Load the app
   if (app.isPackaged) {
-    // Production: Load from installed files
+    // Production: Load from installed files (electron/dist, copied in by CI
+    // before packaging -- this is INSIDE the asar, a sibling of main.js,
+    // so it must NOT use '../' which would point outside the asar to a
+    // resources/dist folder that never gets created)
     mainWindow.loadFile(path.join(__dirname, 'dist', 'index.html'));
   } else {
     // Development: Load from built frontend
@@ -132,13 +135,19 @@ function createMenu() {
       label: 'Help',
       submenu: [
         {
+          label: 'Check for Updates...',
+          click: () => {
+            autoUpdater.checkForUpdatesAndNotify();
+          }
+        },
+        {
           label: 'About CAMBRIC LABS',
           click: () => {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
               title: 'About CAMBRIC LABS',
               message: 'CAMBRIC LABS',
-              detail: 'Version 0.1.0\n\nA local neural-network laboratory for learning, experimenting, building and training neural systems.\n\n© 2024 Cambric Software'
+              detail: `Version ${app.getVersion()}\n\nA local neural-network laboratory for learning, experimenting, building and training neural systems.\n\n© 2024-2026 Cambric Software`
             });
           }
         }
@@ -168,10 +177,56 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+// --- Auto-update wiring -----------------------------------------------
+// Pulls updates from GitHub Releases (configured via the "publish" block in
+// electron/package.json's build config). Only works in the packaged NSIS
+// installer build -- there is no fixed install location for the portable
+// .exe to update in place, so it will silently no-op there, which is fine.
+
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', (info) => {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Update Available',
+      message: `CAMBRIC LABS ${info.version} is available and downloading in the background.`,
+      buttons: ['OK']
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Update Ready',
+      message: `CAMBRIC LABS ${info.version} has been downloaded. Restart now to install it?`,
+      buttons: ['Restart Now', 'Later']
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('Auto-updater error:', err);
+  });
+}
+
 // App ready
 app.whenReady().then(() => {
   createWindow();
   createMenu();
+
+  if (app.isPackaged) {
+    setupAutoUpdater();
+    // Check on launch, then once every 4 hours while the app stays open.
+    autoUpdater.checkForUpdatesAndNotify();
+    setInterval(() => {
+      autoUpdater.checkForUpdatesAndNotify();
+    }, 4 * 60 * 60 * 1000);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

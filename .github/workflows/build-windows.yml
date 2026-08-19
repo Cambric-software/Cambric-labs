@@ -59,7 +59,7 @@ jobs:
       - name: Build Windows executable
         run: |
           cd electron
-          npx electron-builder --win --x64
+          npx electron-builder --win --x64 --publish never
         env:
           VERSION: ${{ github.event.inputs.version || github.ref_name }}
 
@@ -76,6 +76,15 @@ jobs:
           path: |
             electron/release/**/*.exe
             !electron/release/**/*portable*.exe
+          retention-days: 30
+
+      - name: Upload update metadata (needed by electron-updater)
+        uses: actions/upload-artifact@v4
+        with:
+          name: cambric-labs-windows-update-metadata
+          path: |
+            electron/release/**/*.yml
+            electron/release/**/*.blockmap
           retention-days: 30
 
       - name: Upload portable version
@@ -120,6 +129,8 @@ jobs:
           prerelease: false
           files: |
             artifacts/**/*.exe
+            artifacts/**/*.yml
+            artifacts/**/*.blockmap
           body: |
             ## CAMBRIC LABS v${{ github.ref_name }}
 
