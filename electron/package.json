@@ -1,6 +1,6 @@
 {
   "name": "cambric-labs",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "CAMBRIC LABS - Local Neural Network Laboratory",
   "main": "main.js",
   "author": "Cambric Software",
