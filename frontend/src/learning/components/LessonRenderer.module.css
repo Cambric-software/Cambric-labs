@@ -1,0 +1,106 @@
+﻿.explanationBox {
+  padding: var(--lab-space-6);
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-lg);
+  margin-bottom: var(--lab-space-6);
+}
+
+.explanationBox p {
+  line-height: 1.8;
+  font-size: var(--lab-text-base);
+  color: var(--lab-text-primary);
+}
+
+.formulaBox {
+  padding: var(--lab-space-5);
+  background: var(--lab-bg-tertiary);
+  border: 1px solid var(--lab-border);
+  border-left: 3px solid var(--lab-accent-purple);
+  border-radius: var(--lab-radius-md);
+  margin-bottom: var(--lab-space-6);
+}
+
+.formulaBox h3,
+.exampleBox h3 {
+  font-size: var(--lab-text-sm);
+  color: var(--lab-accent-purple);
+  margin-bottom: var(--lab-space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.formulaBox code,
+.exampleBox code {
+  display: block;
+  font-family: var(--lab-font-mono);
+  font-size: var(--lab-text-sm);
+  color: var(--lab-text-primary);
+  white-space: pre-wrap;
+}
+
+.exampleBox {
+  padding: var(--lab-space-5);
+  background: var(--lab-bg-secondary);
+  border: 1px solid var(--lab-border);
+  border-radius: var(--lab-radius-lg);
+  margin-bottom: var(--lab-space-6);
+}
+
+.exampleBox h3 {
+  color: var(--lab-accent-cyan);
+}
+
+.exampleBox > p {
+  margin-bottom: var(--lab-space-3);
+  color: var(--lab-text-secondary);
+}
+
+.exampleBox pre {
+  background: var(--lab-bg-primary);
+  padding: var(--lab-space-4);
+  border-radius: var(--lab-radius-md);
+  overflow-x: auto;
+  border: 1px solid var(--lab-border);
+}
+
+.interactiveBox {
+  padding: var(--lab-space-6);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+  border: 1px solid var(--lab-accent-purple);
+  border-radius: var(--lab-radius-lg);
+  margin-bottom: var(--lab-space-6);
+}
+
+.interactiveBox h3 {
+  color: var(--lab-accent-purple);
+  margin-bottom: var(--lab-space-3);
+}
+
+.interactiveBox ul {
+  margin: var(--lab-space-4) 0;
+  padding-left: var(--lab-space-6);
+}
+
+.interactiveBox li {
+  margin-bottom: var(--lab-space-2);
+  color: var(--lab-text-secondary);
+}
+
+.tryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lab-space-2);
+  padding: var(--lab-space-3) var(--lab-space-5);
+  background: var(--lab-accent-purple);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--lab-radius-md);
+  text-decoration: none;
+  transition: all var(--lab-transition-fast);
+}
+
+.tryBtn:hover {
+  background: var(--lab-accent-blue);
+  transform: translateY(-2px);
+}
