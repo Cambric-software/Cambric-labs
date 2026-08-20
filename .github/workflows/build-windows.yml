@@ -123,10 +123,11 @@ jobs:
       # does -- so deleting first was both unnecessary and destructive.
 
       - name: Create or update Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           draft: false
           prerelease: false
+          overwrite_files: true
           files: |
             artifacts/**/*.exe
             artifacts/**/*.yml
@@ -172,3 +173,4 @@ jobs:
             3. Open the APK file to install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
