@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Neural Network Engine for CAMBRIC LABS
  * Advanced implementation with multiple optimizers, regularization, and full control
  */
@@ -183,14 +183,46 @@ export class NeuralNetwork {
     this.outputDim = config.outputDim
     this.layerConfigs = config.layers
     this.config = { ...config }
-    
-    // Calculate total neurons and initialize
-    const totalNeurons = config.layers.reduce((sum, l) => sum + l.neuronCount, 0)
-    this.weights = initializeWeights(config.inputDim, totalNeurons, config.layers[0]?.activation || 'relu')
-    this.biases = initializeBiases(totalNeurons)
-    
+
+    const initialized = this.initializeAllWeights()
+    this.weights = initialized.weights
+    this.biases = initialized.biases
+
     // Initialize optimizer state
     this.initOptimizerState()
+  }
+
+  /**
+   * Initialize weights layer-by-layer.
+   *
+   * BUG FIX: previously this called initializeWeights(inputDim, totalNeurons, ...)
+   * ONCE for the whole network, giving every neuron in every layer a weight
+   * vector of length equal to the network's ORIGINAL input dimension. That's
+   * only correct for the first layer. Any later layer's neurons actually
+   * take the PREVIOUS layer's neuron count as their input size -- which is
+   * almost always different (and usually larger) than the original input
+   * dimension. The result was weight vectors too short for later layers,
+   * so forward() read past the end of the array (undefined -> NaN) as soon
+   * as any layer had more neurons than the network's original input size --
+   * true for nearly every realistic multi-layer network, including this
+   * app's own default preset (layers [4, 2, Output(1)] with a 2-value input).
+   *
+   * Fix: build each layer's weights using ITS OWN actual input size (the
+   * previous layer's neuron count, or inputDim for the first layer).
+   */
+  private initializeAllWeights(): { weights: number[][]; biases: number[] } {
+    const weights: number[][] = []
+    const biases: number[] = []
+    let previousLayerSize = this.inputDim
+
+    for (const layer of this.layerConfigs) {
+      const layerWeights = initializeWeights(previousLayerSize, layer.neuronCount, layer.activation)
+      weights.push(...layerWeights)
+      biases.push(...initializeBiases(layer.neuronCount))
+      previousLayerSize = layer.neuronCount
+    }
+
+    return { weights, biases }
   }
 
   private initOptimizerState(): void {
@@ -299,14 +331,25 @@ export class NeuralNetwork {
 
     for (let layerIdx = 0; layerIdx < this.layerConfigs.length; layerIdx++) {
       const layer = this.layerConfigs[layerIdx]
+      const layerStartIdx = this.getLayerStartIndex(layerIdx)
       const layerOutputs: number[] = []
       
       for (let n = 0; n < layer.neuronCount; n++) {
-        const weightIndex = this.getWeightIndex(n)
-        const weightVector = this.weights[weightIndex]
+        // BUG FIX: previously called this.getWeightIndex(n) here, where n is
+        // LOCAL to this layer's loop (always starts at 0 for every layer).
+        // getWeightIndex always resolves relative to GLOBAL layer boundaries
+        // starting from layer 0, so it returned 0 for every single call --
+        // every neuron in every layer ended up reading this.weights[0] and
+        // this.biases[0]. Every neuron in a layer computed an identical
+        // output, and cross-layer signal was effectively collapsed to a
+        // single shared neuron repeated at every position. The fix is the
+        // same GLOBAL index computation computeGradients() already used
+        // correctly elsewhere in this same file.
+        const neuronIdx = layerStartIdx + n
+        const weightVector = this.weights[neuronIdx]
         
         // Compute weighted sum for this neuron
-        let weightedSum = this.biases[weightIndex]
+        let weightedSum = this.biases[neuronIdx]
         for (let i = 0; i < currentInput.length; i++) {
           weightedSum += currentInput[i] * weightVector[i]
         }
@@ -339,13 +382,14 @@ export class NeuralNetwork {
     switch (this.config.lossFunction || 'mse') {
       case 'mae':
         return predictions.reduce((sum, p, i) => sum + Math.abs(p - targets[i]), 0) / predictions.length
-      case 'binary_crossentropy':
+      case 'binary_crossentropy': {
         const eps = 1e-15
         return predictions.reduce((sum, p, i) => {
           const pClamped = Math.max(eps, Math.min(1 - eps, p))
           const t = targets[i]
           return sum - (t * Math.log(pClamped) + (1 - t) * Math.log(1 - pClamped))
         }, 0) / predictions.length
+      }
       case 'mse':
       default:
         return predictions.reduce((sum, p, i) => {
@@ -514,7 +558,7 @@ export class NeuralNetwork {
         }
         break
         
-      case 'rmsprop':
+      case 'rmsprop': {
         const decayRate = 0.9
         for (let i = 0; i < this.weights.length; i++) {
           for (let j = 0; j < this.weights[i].length; j++) {
@@ -525,8 +569,9 @@ export class NeuralNetwork {
           this.biases[i] -= (lr / Math.sqrt(this.velocityB[i] + epsilon)) * biasGradients[i]
         }
         break
+      }
         
-      case 'adam':
+      case 'adam': {
         this.iterCount++
         const t = this.iterCount
         
@@ -558,21 +603,8 @@ export class NeuralNetwork {
           this.biases[i] -= lr * mHatB / (Math.sqrt(vHatB) + epsilon)
         }
         break
-    }
-  }
-
-  /**
-   * Get weight matrix index for a neuron
-   */
-  private getWeightIndex(neuronIndex: number): number {
-    let index = 0
-    for (let l = 0; l < this.layerConfigs.length; l++) {
-      if (neuronIndex < index + this.layerConfigs[l].neuronCount) {
-        return index
       }
-      index += this.layerConfigs[l].neuronCount
     }
-    return 0
   }
 
   /**
@@ -590,9 +622,9 @@ export class NeuralNetwork {
    * Reset the network with fresh weights
    */
   reset(): void {
-    const totalNeurons = this.layerConfigs.reduce((sum, l) => sum + l.neuronCount, 0)
-    this.weights = initializeWeights(this.inputDim, totalNeurons, this.layerConfigs[0]?.activation || 'relu')
-    this.biases = initializeBiases(totalNeurons)
+    const initialized = this.initializeAllWeights()
+    this.weights = initialized.weights
+    this.biases = initialized.biases
     this.iterCount = 0
     this.initOptimizerState()
   }
